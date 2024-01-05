@@ -33,7 +33,7 @@ pub enum AbiError {
     #[fail(display = "Deserialization error {}: {}", msg, cursor)]
     DeserializationError {
         msg: &'static str,
-        cursor: ton_types::SliceData,
+        cursor: tvm_types::SliceData,
     },
 
     #[fail(display = "Not implemented")]
@@ -104,5 +104,5 @@ pub enum AbiError {
     AddressRequired,
 
     #[fail(display = "Wrong data layout")]
-    WrongDataLayout
+    WrongDataLayout,
 }

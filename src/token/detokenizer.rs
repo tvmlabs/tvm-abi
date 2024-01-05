@@ -20,7 +20,7 @@ use crate::{
 use num_bigint::{BigInt, BigUint};
 use serde::ser::{Serialize, SerializeMap, Serializer};
 use std::collections::{BTreeMap, HashMap};
-use ton_types::{write_boc, Cell, Result};
+use tvm_types::{write_boc, Cell, Result};
 
 pub struct Detokenizer;
 

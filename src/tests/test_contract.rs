@@ -11,8 +11,8 @@
 * limitations under the License.
 */
 
-use ton_block::{Deserializable, StateInit};
-use ton_types::{read_single_root_boc, Result, SliceData};
+use tvm_block::{Deserializable, StateInit};
+use tvm_types::{read_single_root_boc, Result, SliceData};
 
 use crate::{Contract, PublicKeyData};
 

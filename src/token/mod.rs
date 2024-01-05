@@ -13,19 +13,20 @@
 
 //! TON ABI params.
 use crate::{
+    contract::{AbiVersion, ABI_VERSION_2_4},
     error::AbiError,
     int::{Int, Uint},
     param::Param,
     param_type::ParamType,
-    PublicKeyData, contract::{AbiVersion, ABI_VERSION_2_4},
+    PublicKeyData,
 };
 
 use chrono::prelude::Utc;
 use num_bigint::{BigInt, BigUint};
 use std::collections::BTreeMap;
 use std::fmt;
-use ton_block::{Grams, MsgAddress};
-use ton_types::{Cell, Result, BuilderData};
+use tvm_block::{Grams, MsgAddress};
+use tvm_types::{BuilderData, Cell, Result};
 
 mod deserialize;
 mod detokenizer;
@@ -327,7 +328,7 @@ impl TokenValue {
         match param_type {
             ParamType::Int(size) | ParamType::Uint(size) => Ok(*size),
             ParamType::Address => Ok(crate::token::STD_ADDRESS_BIT_LENGTH),
-            _ => Err(ton_types::error!(AbiError::InvalidData {
+            _ => Err(tvm_types::error!(AbiError::InvalidData {
                 msg: "Only integer and std address values can be map keys".to_owned()
             })),
         }
@@ -366,9 +367,9 @@ impl TokenValue {
             | ParamType::FixedBytes(_)
             | ParamType::Ref(_) => 1,
             // tuple refs is sum of inner types refs
-            ParamType::Tuple(params) => params
-                .iter()
-                .fold(0, |acc, param| acc + Self::max_refs_count(&param.kind, abi_version)),
+            ParamType::Tuple(params) => params.iter().fold(0, |acc, param| {
+                acc + Self::max_refs_count(&param.kind, abi_version)
+            }),
             // large optional is serialized into reference
             ParamType::Optional(param_type) => {
                 if Self::is_large_optional(param_type, abi_version) {
@@ -400,9 +401,9 @@ impl TokenValue {
             ParamType::Expire => 32,
             ParamType::PublicKey => 257,
             ParamType::Ref(_) => 0,
-            ParamType::Tuple(params) => params
-                .iter()
-                .fold(0, |acc, param| acc + Self::max_bit_size(&param.kind, abi_version)),
+            ParamType::Tuple(params) => params.iter().fold(0, |acc, param| {
+                acc + Self::max_bit_size(&param.kind, abi_version)
+            }),
             ParamType::Optional(param_type) => {
                 if Self::is_large_optional(&param_type, abi_version) {
                     1

@@ -14,8 +14,8 @@
 use crate::token::Detokenizer;
 use crate::{Function, Int, Param, ParamType, Token, TokenValue, Uint};
 
-use ton_types::BuilderData;
-use ton_types::IBitstring;
+use tvm_types::BuilderData;
+use tvm_types::IBitstring;
 
 use crate::contract::ABI_VERSION_2_0;
 

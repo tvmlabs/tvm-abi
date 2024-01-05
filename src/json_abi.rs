@@ -20,8 +20,8 @@ use crate::{
 
 use serde_json::Value;
 use std::{collections::HashMap, str::FromStr};
-use ton_block::MsgAddressInt;
-use ton_types::{BuilderData, Ed25519PrivateKey, Result, SliceData};
+use tvm_block::MsgAddressInt;
+use tvm_types::{BuilderData, Ed25519PrivateKey, Result, SliceData};
 
 /// Encodes `parameters` for given `function` of contract described by `abi` into `BuilderData`
 /// which can be used as message body for calling contract

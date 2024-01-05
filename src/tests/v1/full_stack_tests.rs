@@ -11,9 +11,9 @@
 * limitations under the License.
 */
 
-use ton_block::{MsgAddressInt, Serializable};
-use ton_types::dictionary::HashmapE;
-use ton_types::{ed25519_generate_private_key, BuilderData, Ed25519PublicKey, SliceData};
+use tvm_block::{MsgAddressInt, Serializable};
+use tvm_types::dictionary::HashmapE;
+use tvm_types::{ed25519_generate_private_key, BuilderData, Ed25519PublicKey, SliceData};
 
 use crate::json_abi::*;
 

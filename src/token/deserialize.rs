@@ -24,8 +24,8 @@ use num_bigint::{BigInt, BigUint};
 use num_traits::ToPrimitive;
 use serde_json;
 use std::{collections::BTreeMap, convert::TryInto};
-use ton_block::{types::Grams, MsgAddress};
-use ton_types::{
+use tvm_block::{types::Grams, MsgAddress};
+use tvm_types::{
     error, fail, BuilderData, Cell, HashmapE, HashmapType, IBitstring, Result, SliceData,
 };
 
@@ -38,7 +38,11 @@ pub struct Cursor {
 
 impl From<SliceData> for Cursor {
     fn from(slice: SliceData) -> Self {
-        Self { used_bits: 0, used_refs: 0, slice }
+        Self {
+            used_bits: 0,
+            used_refs: 0,
+            slice,
+        }
     }
 }
 
@@ -78,7 +82,7 @@ impl TokenValue {
             ParamType::Address => {
                 let mut slice = find_next_bits(slice, 1)?;
                 let address =
-                    <MsgAddress as ton_block::Deserializable>::construct_from(&mut slice)?;
+                    <MsgAddress as tvm_block::Deserializable>::construct_from(&mut slice)?;
                 Ok((TokenValue::Address(address), slice))
             }
             ParamType::Bytes => Self::read_bytes(slice, last, abi_version),
@@ -86,7 +90,7 @@ impl TokenValue {
             ParamType::String => Self::read_string(slice, last, abi_version),
             ParamType::Token => {
                 let mut slice = find_next_bits(slice, 1)?;
-                let gram = <Grams as ton_block::Deserializable>::construct_from(&mut slice)?;
+                let gram = <Grams as tvm_block::Deserializable>::construct_from(&mut slice)?;
                 Ok((TokenValue::Token(gram), slice))
             }
             ParamType::Time => Self::read_time(slice),
@@ -124,9 +128,12 @@ impl TokenValue {
             let param_max_bits = Self::max_bit_size(param_type, abi_version);
             let param_max_refs = Self::max_refs_count(param_type, abi_version);
             if new_cell != orig_cell {
-                if  cursor.used_bits + param_max_bits <= BuilderData::bits_capacity() && 
-                    (last && cursor.used_refs + param_max_refs <= BuilderData::references_capacity() ||
-                    !last && cursor.used_refs + param_max_refs <= BuilderData::references_capacity() - 1)
+                if cursor.used_bits + param_max_bits <= BuilderData::bits_capacity()
+                    && (last
+                        && cursor.used_refs + param_max_refs <= BuilderData::references_capacity()
+                        || !last
+                            && cursor.used_refs + param_max_refs
+                                <= BuilderData::references_capacity() - 1)
                 {
                     fail!(AbiError::WrongDataLayout);
                 }
@@ -135,8 +142,8 @@ impl TokenValue {
             } else {
                 cursor.used_bits += param_max_bits;
                 cursor.used_refs += param_max_refs;
-                if  cursor.used_bits > BuilderData::bits_capacity() ||
-                    cursor.used_refs > BuilderData::references_capacity()
+                if cursor.used_bits > BuilderData::bits_capacity()
+                    || cursor.used_refs > BuilderData::references_capacity()
                 {
                     fail!(AbiError::WrongDataLayout);
                 }
@@ -146,17 +153,21 @@ impl TokenValue {
                 // following error will never appear because SliceData::cell_opt function returns
                 // None only if slice contains just data without refs. And if there is no refs then
                 // cursor cell can not change
-                let orig_cell = orig_cell
-                    .ok_or_else(|| AbiError::DeserializationError { 
-                        msg: "No original cell in layout check", cursor: cursor.slice.clone()
-                    })?;
+                let orig_cell = orig_cell.ok_or_else(|| AbiError::DeserializationError {
+                    msg: "No original cell in layout check",
+                    cursor: cursor.slice.clone(),
+                })?;
 
                 let param_bits = new_slice.pos();
                 let param_refs = new_slice.get_references().start;
 
-                if  param_bits <= BuilderData::bits_capacity() - orig_cell.bit_length() && 
-                    (last && param_refs + orig_cell.references_count() <= BuilderData::references_capacity() ||
-                    (!last || abi_version == &ABI_VERSION_1_0) && param_refs + orig_cell.references_count() <= BuilderData::references_capacity() - 1)
+                if param_bits <= BuilderData::bits_capacity() - orig_cell.bit_length()
+                    && (last
+                        && param_refs + orig_cell.references_count()
+                            <= BuilderData::references_capacity()
+                        || (!last || abi_version == &ABI_VERSION_1_0)
+                            && param_refs + orig_cell.references_count()
+                                <= BuilderData::references_capacity() - 1)
                 {
                     fail!(AbiError::WrongDataLayout);
                 }
@@ -218,7 +229,11 @@ impl TokenValue {
         allow_partial: bool,
     ) -> Result<(Self, Cursor)> {
         let (tokens, cursor) = Self::decode_params_with_cursor(
-            tuple_params, cursor, abi_version, allow_partial, last
+            tuple_params,
+            cursor,
+            abi_version,
+            allow_partial,
+            last,
         )?;
         Ok((TokenValue::Tuple(tokens), cursor))
     }
@@ -255,18 +270,24 @@ impl TokenValue {
             index.append_u32(i as u32)?;
             match map.get(SliceData::load_builder(index)?) {
                 Ok(Some(mut item_slice)) => {
-                    let do_load_ref = 
+                    let do_load_ref =
                         if abi_version == &ABI_VERSION_1_0 || abi_version == &ABI_VERSION_2_0 {
-                            item_slice.remaining_bits() == 0 && Self::max_bit_size(item_type, abi_version) != 0
+                            item_slice.remaining_bits() == 0
+                                && Self::max_bit_size(item_type, abi_version) != 0
                         } else {
                             let value_len = Self::max_bit_size(item_type, abi_version);
                             Self::map_value_in_ref(32, value_len)
                         };
-                    if do_load_ref  {
+                    if do_load_ref {
                         item_slice = SliceData::load_cell(item_slice.checked_drain_reference()?)?;
                     }
-                    let (token, _) =
-                        Self::read_from(item_type, item_slice.into(), true, abi_version, allow_partial)?;
+                    let (token, _) = Self::read_from(
+                        item_type,
+                        item_slice.into(),
+                        true,
+                        abi_version,
+                        allow_partial,
+                    )?;
                     result.push(token);
                 }
                 _ => fail!(AbiError::DeserializationError {
@@ -354,7 +375,8 @@ impl TokenValue {
             if value_in_ref {
                 value = SliceData::load_cell(value.checked_drain_reference()?)?;
             }
-            let value = Self::read_from(value_type, value.into(), true, abi_version, allow_partial)?.0;
+            let value =
+                Self::read_from(value_type, value.into(), true, abi_version, allow_partial)?.0;
             new_map.insert(key, value);
             Ok(true)
         })?;
@@ -412,7 +434,6 @@ impl TokenValue {
                 }))
             }
         }
-
     }
 
     fn read_bytes(

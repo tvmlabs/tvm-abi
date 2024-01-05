@@ -721,7 +721,7 @@ See [https://github.com/ton-blockchain/ton/blob/master/crypto/block/block.tlb#L3
 
 ## Reference
 
-- [ABI changelog specifications](https://github.com/tonlabs/ever-abi/tree/master/docs)
-- [ABI implementation](https://github.com/tonlabs/ever-abi)
+- [ABI changelog specifications](https://github.com/tvmlabs/tvm-abi/tree/master/docs)
+- [ABI implementation](https://github.com/tvmlabs/tvm-abi)
 - [ABI parser](https://github.com/broxus/everscale-web-tools/tree/master/abi-parser)
 - [ABI serializer](https://ever.bytie.moe/serializer)

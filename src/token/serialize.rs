@@ -22,8 +22,8 @@ use crate::{
 
 use num_bigint::{BigInt, BigUint, Sign};
 use std::collections::BTreeMap;
-use ton_block::Serializable;
-use ton_types::{error, fail, BuilderData, Cell, HashmapE, IBitstring, Result, SliceData};
+use tvm_block::Serializable;
+use tvm_types::{error, fail, BuilderData, Cell, HashmapE, IBitstring, Result, SliceData};
 
 pub struct SerializedValue {
     pub data: BuilderData,
