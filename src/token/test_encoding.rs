@@ -376,11 +376,11 @@ fn test_nested_tuples_with_all_simples() {
     builder.checked_append_reference(Cell::default()).unwrap();
 
     builder.append_bit_zero().unwrap();
-    builder.append_i8((-15_i8)).unwrap();
+    builder.append_i8(-15_i8).unwrap();
     builder.append_i16(9845_i16).unwrap();
-    builder.append_i32((-1_i32)).unwrap();
+    builder.append_i32(-1_i32).unwrap();
     builder.append_i64(12345678_i64).unwrap();
-    builder.append_i128((-12345678_i128)).unwrap();
+    builder.append_i128(-12345678_i128).unwrap();
     builder.append_u8(255_u8).unwrap();
     builder.append_u16(0_u16).unwrap();
     builder.append_u32(256_u32).unwrap();
@@ -568,7 +568,7 @@ fn test_tuples_with_combined_types() {
     add_array_as_map(&mut chain_builder, &bitstring_array1, false);
 
     // i16
-    chain_builder.append_i16((-290_i16)).unwrap();
+    chain_builder.append_i16(-290_i16).unwrap();
 
     // input_array2
     add_array_as_map(&mut chain_builder, &input_array2, false);
