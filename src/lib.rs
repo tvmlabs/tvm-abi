@@ -31,4 +31,6 @@ pub use param::Param;
 pub use param_type::ParamType;
 pub use token::{Token, TokenValue};
 
-include!("../common/src/info.rs");
+pub fn build_commit() -> Option<&'static str> {
+    std::option_env!("BUILD_GIT_COMMIT")
+}
