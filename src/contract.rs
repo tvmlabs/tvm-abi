@@ -57,7 +57,7 @@ pub struct AbiVersion {
 
 impl AbiVersion {
     pub fn parse(str_version: &str) -> Result<Self> {
-        let parts: Vec<&str> = str_version.split(".").collect();
+        let parts: Vec<&str> = str_version.split('.').collect();
         if parts.len() < 2 {
             fail!(AbiError::InvalidVersion(format!(
                 "version must consist of two parts divided by `.` ({})",
@@ -65,13 +65,13 @@ impl AbiVersion {
             )));
         }
 
-        let major = u8::from_str_radix(parts[0], 10).map_err(|err| {
+        let major = parts[0].parse::<u8>().map_err(|err| {
             error!(AbiError::InvalidVersion(format!(
                 "can not parse version string: {} ({})",
                 err, str_version
             )))
         })?;
-        let minor = u8::from_str_radix(parts[1], 10).map_err(|err| {
+        let minor = parts[1].parse::<u8>().map_err(|err| {
             error!(AbiError::InvalidVersion(format!(
                 "can not parse version string: {} ({})",
                 err, str_version
@@ -149,7 +149,7 @@ where
 
             u32::from_str_radix(&string[2..], 16)
                 .map_err(|err| D::Error::custom(format!("Error parsing number: {}", err)))
-                .map(|value| Some(value))
+                .map(Some)
         }
     }
 }
@@ -265,7 +265,7 @@ impl Contract {
         }
 
         if version.major == 1 {
-            if serde_contract.header.len() != 0 {
+            if !serde_contract.header.is_empty() {
                 return Err(AbiError::InvalidData {
                     msg: "Header parameters are not supported in ABI v1".into(),
                 }
@@ -283,7 +283,7 @@ impl Contract {
         }
 
         let mut result = Self {
-            abi_version: version.clone(),
+            abi_version: version,
             header: serde_contract.header,
             functions: HashMap::new(),
             events: HashMap::new(),
@@ -297,13 +297,13 @@ impl Contract {
             Self::check_params_support(&version, function.outputs.iter())?;
             result.functions.insert(
                 function.name.clone(),
-                Function::from_serde(version.clone(), function, result.header.clone()),
+                Function::from_serde(version, function, result.header.clone()),
             );
         }
 
         for event in serde_contract.events {
             Self::check_params_support(&version, event.inputs.iter())?;
-            result.events.insert(event.name.clone(), Event::from_serde(version.clone(), event));
+            result.events.insert(event.name.clone(), Event::from_serde(version, event));
         }
 
         Self::check_params_support(&version, serde_contract.data.iter().map(|val| &val.value))?;
@@ -348,7 +348,7 @@ impl Contract {
 
     /// Returns `Function` struct with provided function id.
     pub fn function_by_id(&self, id: u32, input: bool) -> Result<&Function> {
-        for (_, func) in &self.functions {
+        for func in self.functions.values() {
             let func_id = if input { func.get_input_id() } else { func.get_output_id() };
             if func_id == id {
                 return Ok(func);
@@ -365,7 +365,7 @@ impl Contract {
 
     /// Returns `Event` struct with provided function id.
     pub fn event_by_id(&self, id: u32) -> Result<&Event> {
-        for (_, event) in &self.events {
+        for event in self.events.values() {
             if event.get_id() == id {
                 return Ok(event);
             }
@@ -509,11 +509,11 @@ impl Contract {
         let map = HashmapE::with_hashmap(Self::DATA_MAP_KEYLEN, data.reference_opt(0));
 
         let mut tokens = vec![];
-        for (_, item) in &self.data {
+        for item in self.data.values() {
             let key = SliceData::load_builder(item.key.write_to_new_cell()?)?;
             if let Some(value) = map.get(key)? {
                 tokens.append(&mut TokenValue::decode_params(
-                    &vec![item.value.clone()],
+                    &[item.value.clone()],
                     value,
                     &self.abi_version,
                     allow_partial,

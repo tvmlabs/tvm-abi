@@ -77,10 +77,10 @@ impl TokenValue {
                 return Self::read_tuple(tuple_params, cursor, last, abi_version, allow_partial);
             }
             ParamType::Array(item_type) => {
-                Self::read_array(&item_type, slice, abi_version, allow_partial)
+                Self::read_array(item_type, slice, abi_version, allow_partial)
             }
             ParamType::FixedArray(item_type, size) => {
-                Self::read_fixed_array(&item_type, *size, slice, abi_version, allow_partial)
+                Self::read_fixed_array(item_type, *size, slice, abi_version, allow_partial)
             }
             ParamType::Cell => Self::read_cell(slice, last, abi_version)
                 .map(|(cell, slice)| (TokenValue::Cell(cell), slice)),
@@ -105,10 +105,10 @@ impl TokenValue {
             ParamType::Expire => Self::read_expire(slice),
             ParamType::PublicKey => Self::read_public_key(slice),
             ParamType::Optional(inner_type) => {
-                Self::read_optional(&inner_type, slice, last, abi_version, allow_partial)
+                Self::read_optional(inner_type, slice, last, abi_version, allow_partial)
             }
             ParamType::Ref(inner_type) => {
-                Self::read_ref(&inner_type, slice, last, abi_version, allow_partial)
+                Self::read_ref(inner_type, slice, last, abi_version, allow_partial)
             }
         }?;
 
@@ -156,29 +156,27 @@ impl TokenValue {
                     fail!(AbiError::WrongDataLayout);
                 }
             }
-        } else {
-            if new_cell != orig_cell {
-                // following error will never appear because SliceData::cell_opt function
-                // returns None only if slice contains just data without refs.
-                // And if there is no refs then cursor cell can not change
-                let orig_cell = orig_cell.ok_or_else(|| AbiError::DeserializationError {
-                    msg: "No original cell in layout check",
-                    cursor: cursor.slice.clone(),
-                })?;
+        } else if new_cell != orig_cell {
+            // following error will never appear because SliceData::cell_opt function
+            // returns None only if slice contains just data without refs.
+            // And if there is no refs then cursor cell can not change
+            let orig_cell = orig_cell.ok_or_else(|| AbiError::DeserializationError {
+                msg: "No original cell in layout check",
+                cursor: cursor.slice.clone(),
+            })?;
 
-                let param_bits = new_slice.pos();
-                let param_refs = new_slice.get_references().start;
+            let param_bits = new_slice.pos();
+            let param_refs = new_slice.get_references().start;
 
-                if param_bits <= BuilderData::bits_capacity() - orig_cell.bit_length()
-                    && (last
+            if param_bits <= BuilderData::bits_capacity() - orig_cell.bit_length()
+                && (last
+                    && param_refs + orig_cell.references_count()
+                        <= BuilderData::references_capacity()
+                    || (!last || abi_version == &ABI_VERSION_1_0)
                         && param_refs + orig_cell.references_count()
-                            <= BuilderData::references_capacity()
-                        || (!last || abi_version == &ABI_VERSION_1_0)
-                            && param_refs + orig_cell.references_count()
-                                <= BuilderData::references_capacity() - 1)
-                {
-                    fail!(AbiError::WrongDataLayout);
-                }
+                            <= BuilderData::references_capacity() - 1)
+            {
+                fail!(AbiError::WrongDataLayout);
             }
         }
 

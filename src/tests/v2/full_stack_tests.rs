@@ -238,7 +238,7 @@ fn test_signed_call() {
 
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&response.params).unwrap(),
-        serde_json::from_str::<serde_json::Value>(&expected_params).unwrap()
+        serde_json::from_str::<serde_json::Value>(expected_params).unwrap()
     );
     assert_eq!(response.function_name, "createArbitraryLimit");
 
@@ -261,7 +261,7 @@ fn test_signed_call() {
 
     let hash = test_tree.into_cell().repr_hash();
     assert_eq!(hash.clone().into_vec(), test_hash);
-    ed25519_verify(&public_key, hash.as_slice(), &sign).unwrap();
+    ed25519_verify(&public_key, hash.as_slice(), sign).unwrap();
 
     let expected_response = r#"{"value0":"0"}"#;
 
@@ -375,7 +375,7 @@ fn test_store_pubkey() {
 
     let data = SliceData::load_cell(test_map.serialize().unwrap()).unwrap();
 
-    let new_data = Contract::insert_pubkey(data.into(), &test_pubkey).unwrap();
+    let new_data = Contract::insert_pubkey(data, &test_pubkey).unwrap();
 
     let new_map = HashmapE::with_hashmap(Contract::DATA_MAP_KEYLEN, new_data.reference_opt(0));
     let key_slice = new_map
@@ -534,7 +534,7 @@ fn test_signed_call_v23() {
 
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&response.params).unwrap(),
-        serde_json::from_str::<serde_json::Value>(&expected_params).unwrap()
+        serde_json::from_str::<serde_json::Value>(expected_params).unwrap()
     );
     assert_eq!(response.function_name, "createArbitraryLimit");
 
@@ -565,7 +565,7 @@ fn test_signed_call_v23() {
 
     let hash = signed_tree.into_cell().unwrap().repr_hash();
     assert_eq!(hash.clone().into_vec(), test_hash);
-    ed25519_verify(&public_key, hash.as_slice(), &sign).unwrap();
+    ed25519_verify(&public_key, hash.as_slice(), sign).unwrap();
 
     let expected_response = r#"{"value0":"0"}"#;
 

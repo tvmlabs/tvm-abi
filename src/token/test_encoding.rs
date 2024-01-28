@@ -49,9 +49,9 @@ use crate::Uint;
 fn put_array_into_map<T: Serializable>(array: &[T]) -> HashmapE {
     let mut map = HashmapE::with_bit_len(32);
 
-    for i in 0..array.len() {
+    for (i, item) in array.iter().enumerate() {
         let index = (i as u32).write_to_new_cell().unwrap();
-        let data = array[i].write_to_new_cell().unwrap();
+        let data = item.write_to_new_cell().unwrap();
         map.set_builder(SliceData::load_builder(index).unwrap(), &data).unwrap();
     }
 
@@ -103,7 +103,7 @@ fn test_parameters_set(
 }
 
 fn params_from_tokens(tokens: &[Token]) -> Vec<Param> {
-    tokens.iter().map(|ref token| token.get_param()).collect()
+    tokens.iter().map(|token| token.get_param()).collect()
 }
 
 fn tokens_from_values(values: Vec<TokenValue>) -> Vec<Token> {
@@ -376,16 +376,16 @@ fn test_nested_tuples_with_all_simples() {
     builder.checked_append_reference(Cell::default()).unwrap();
 
     builder.append_bit_zero().unwrap();
-    builder.append_i8(-15 as i8).unwrap();
-    builder.append_i16(9845 as i16).unwrap();
-    builder.append_i32(-1 as i32).unwrap();
-    builder.append_i64(12345678 as i64).unwrap();
-    builder.append_i128(-12345678 as i128).unwrap();
-    builder.append_u8(255 as u8).unwrap();
-    builder.append_u16(0 as u16).unwrap();
-    builder.append_u32(256 as u32).unwrap();
-    builder.append_u64(123 as u64).unwrap();
-    builder.append_u128(1234567890 as u128).unwrap();
+    builder.append_i8((-15_i8)).unwrap();
+    builder.append_i16(9845_i16).unwrap();
+    builder.append_i32((-1_i32)).unwrap();
+    builder.append_i64(12345678_i64).unwrap();
+    builder.append_i128((-12345678_i128)).unwrap();
+    builder.append_u8(255_u8).unwrap();
+    builder.append_u16(0_u16).unwrap();
+    builder.append_u32(256_u32).unwrap();
+    builder.append_u64(123_u64).unwrap();
+    builder.append_u128(1234567890_u128).unwrap();
 
     let values = vec![
         TokenValue::Bool(false),
@@ -514,11 +514,11 @@ fn test_dynamic_array_of_tuples() {
     builder.checked_append_reference(Cell::default()).unwrap();
 
     let bitstring_array: Vec<TupleDwordBool> =
-        input_array.iter().map(|a| TupleDwordBool::from(a)).collect();
+        input_array.iter().map(TupleDwordBool::from).collect();
 
     add_array_as_map(&mut builder, &bitstring_array, false);
 
-    let expected_tree = builder.into();
+    let expected_tree = builder;
 
     let values = vec![TokenValue::Array(
         ParamType::Tuple(vec![
@@ -549,7 +549,7 @@ fn test_tuples_with_combined_types() {
     let input_array1: Vec<(u32, bool)> = vec![(1, true), (2, false), (3, true), (4, false)];
 
     let bitstring_array1: Vec<TupleDwordBool> =
-        input_array1.iter().map(|a| TupleDwordBool::from(a)).collect();
+        input_array1.iter().map(TupleDwordBool::from).collect();
 
     let mut input_array2 = Vec::<u64>::new();
     for i in 0..73 {
@@ -568,7 +568,7 @@ fn test_tuples_with_combined_types() {
     add_array_as_map(&mut chain_builder, &bitstring_array1, false);
 
     // i16
-    chain_builder.append_i16(-290 as i16).unwrap();
+    chain_builder.append_i16((-290_i16)).unwrap();
 
     // input_array2
     add_array_as_map(&mut chain_builder, &input_array2, false);
@@ -767,7 +767,7 @@ fn vec_to_map<K: Serializable>(vec: &[(K, BuilderData)], size: usize) -> Hashmap
 
     for (key, value) in vec {
         let key = SliceData::load_builder(key.write_to_new_cell().unwrap()).unwrap();
-        map.set_builder(key, &value).unwrap();
+        map.set_builder(key, value).unwrap();
     }
 
     map
@@ -1320,8 +1320,8 @@ fn test_wrong_layout() {
     let addr = MsgAddress::AddrStd(Default::default());
 
     let mut builder = BuilderData::new();
-    builder.append_builder(&addr.write_to_new_cell().unwrap().into()).unwrap();
-    builder.append_builder(&addr.write_to_new_cell().unwrap().into()).unwrap();
+    builder.append_builder(&addr.write_to_new_cell().unwrap()).unwrap();
+    builder.append_builder(&addr.write_to_new_cell().unwrap()).unwrap();
 
     let slice = SliceData::load_builder(builder).unwrap();
 

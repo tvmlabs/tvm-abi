@@ -50,9 +50,9 @@ impl Tokenizer {
             ParamType::VarInt(size) => Self::tokenize_varint(*size, value, name),
             ParamType::Bool => Self::tokenize_bool(value, name),
             ParamType::Tuple(tuple_params) => Self::tokenize_tuple(tuple_params, value, name),
-            ParamType::Array(param_type) => Self::tokenize_array(&param_type, value, name),
+            ParamType::Array(param_type) => Self::tokenize_array(param_type, value, name),
             ParamType::FixedArray(param_type, size) => {
-                Self::tokenize_fixed_array(&param_type, *size, value, name)
+                Self::tokenize_fixed_array(param_type, *size, value, name)
             }
             ParamType::Cell => Self::tokenize_cell(value, name),
             ParamType::Map(key_type, value_type) => {
@@ -360,7 +360,7 @@ impl Tokenizer {
             name: name.to_string(),
             err: format!("can not decode base64: {}", err),
         })?;
-        let cell = read_single_root_boc(&data).map_err(|err| AbiError::InvalidParameterValue {
+        let cell = read_single_root_boc(data).map_err(|err| AbiError::InvalidParameterValue {
             val: value.clone(),
             name: name.to_string(),
             err: format!("can not deserialize cell: {}", err),
@@ -431,7 +431,7 @@ impl Tokenizer {
     }
 
     /// Tries to parse a value as tuple.
-    fn tokenize_tuple(params: &Vec<Param>, value: &Value, name: &str) -> Result<TokenValue> {
+    fn tokenize_tuple(params: &[Param], value: &Value, name: &str) -> Result<TokenValue> {
         if !value.is_object() {
             fail!(AbiError::WrongDataFormat {
                 val: value.clone(),
@@ -478,7 +478,7 @@ impl Tokenizer {
             expected: "hex-encoded string".to_string(),
         })?;
 
-        if string.len() == 0 {
+        if string.is_empty() {
             Ok(TokenValue::PublicKey(None))
         } else {
             let data = hex::decode(string).map_err(|err| AbiError::InvalidParameterValue {
@@ -512,7 +512,7 @@ impl Tokenizer {
 
     fn tokenize_address(value: &Value, name: &str) -> Result<TokenValue> {
         let address =
-            MsgAddress::from_str(&value.as_str().ok_or_else(|| AbiError::WrongDataFormat {
+            MsgAddress::from_str(value.as_str().ok_or_else(|| AbiError::WrongDataFormat {
                 val: value.clone(),
                 name: name.to_string(),
                 expected: "address string".to_string(),

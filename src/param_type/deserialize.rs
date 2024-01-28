@@ -77,7 +77,8 @@ pub fn read_type(name: &str) -> Result<ParamType> {
             return Ok(ParamType::Array(Box::new(subtype)));
         } else {
             // it's a fixed array.
-            let len = usize::from_str_radix(&num, 10)
+            let len = num
+                .parse::<usize>()
                 .map_err(|_| AbiError::InvalidName { name: name.to_owned() })?;
 
             let subtype = read_type(&name[..count - num.len() - 2])?;
@@ -91,27 +92,31 @@ pub fn read_type(name: &str) -> Result<ParamType> {
         // with parameters in `Param` type deserialization
         "tuple" => ParamType::Tuple(Vec::new()),
         s if s.starts_with("int") => {
-            let len = usize::from_str_radix(&s[3..], 10)
+            let len = s[3..]
+                .parse::<usize>()
                 .map_err(|_| AbiError::InvalidName { name: name.to_owned() })?;
             ParamType::Int(len)
         }
         s if s.starts_with("uint") => {
-            let len = usize::from_str_radix(&s[4..], 10)
+            let len = s[4..]
+                .parse::<usize>()
                 .map_err(|_| AbiError::InvalidName { name: name.to_owned() })?;
             ParamType::Uint(len)
         }
         s if s.starts_with("varint") => {
-            let len = usize::from_str_radix(&s[6..], 10)
+            let len = s[6..]
+                .parse::<usize>()
                 .map_err(|_| AbiError::InvalidName { name: name.to_owned() })?;
             ParamType::VarInt(len)
         }
         s if s.starts_with("varuint") => {
-            let len = usize::from_str_radix(&s[7..], 10)
+            let len = s[7..]
+                .parse::<usize>()
                 .map_err(|_| AbiError::InvalidName { name: name.to_owned() })?;
             ParamType::VarUint(len)
         }
-        s if s.starts_with("map(") && s.ends_with(")") => {
-            let types: Vec<&str> = name[4..name.len() - 1].splitn(2, ",").collect();
+        s if s.starts_with("map(") && s.ends_with(')') => {
+            let types: Vec<&str> = name[4..name.len() - 1].splitn(2, ',').collect();
             if types.len() != 2 {
                 fail!(AbiError::InvalidName { name: name.to_owned() });
             }
@@ -133,7 +138,8 @@ pub fn read_type(name: &str) -> Result<ParamType> {
         "token" => ParamType::Token,
         "bytes" => ParamType::Bytes,
         s if s.starts_with("fixedbytes") => {
-            let len = usize::from_str_radix(&s[10..], 10)
+            let len = s[10..]
+                .parse::<usize>()
                 .map_err(|_| AbiError::InvalidName { name: name.to_owned() })?;
             ParamType::FixedBytes(len)
         }
@@ -141,11 +147,11 @@ pub fn read_type(name: &str) -> Result<ParamType> {
         "expire" => ParamType::Expire,
         "pubkey" => ParamType::PublicKey,
         "string" => ParamType::String,
-        s if s.starts_with("optional(") && s.ends_with(")") => {
+        s if s.starts_with("optional(") && s.ends_with(')') => {
             let inner_type = read_type(&name[9..name.len() - 1])?;
             ParamType::Optional(Box::new(inner_type))
         }
-        s if s.starts_with("ref(") && s.ends_with(")") => {
+        s if s.starts_with("ref(") && s.ends_with(')') => {
             let inner_type = read_type(&name[4..name.len() - 1])?;
             ParamType::Ref(Box::new(inner_type))
         }

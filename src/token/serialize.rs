@@ -205,7 +205,7 @@ impl TokenValue {
             builder.append_raw(&vec, value.size - dif)?;
         } else {
             let offset = vec_bits_length - value.size;
-            let first_byte = vec[offset / 8] << offset % 8;
+            let first_byte = vec[offset / 8] << (offset % 8);
 
             builder.append_raw(&[first_byte], 8 - offset % 8)?;
             builder.append_raw(&vec[offset / 8 + 1..], vec[offset / 8 + 1..].len() * 8)?;
@@ -227,10 +227,10 @@ impl TokenValue {
         let mut builder = BuilderData::new();
         let bits = Self::varint_size_len(size);
         if vec != &[0] {
-            builder.append_bits(vec.len(), bits as usize)?;
-            builder.append_raw(&vec, vec.len() * 8)?;
+            builder.append_bits(vec.len(), bits)?;
+            builder.append_raw(vec, vec.len() * 8)?;
         } else {
-            builder.append_bits(0, bits as usize)?;
+            builder.append_bits(0, bits)?;
         }
 
         Ok(builder)
@@ -260,7 +260,7 @@ impl TokenValue {
 
     fn write_bool(value: &bool) -> Result<BuilderData> {
         let mut builder = BuilderData::new();
-        builder.append_bit_bool(value.clone())?;
+        builder.append_bit_bool(*value)?;
         Ok(builder)
     }
 
@@ -281,11 +281,10 @@ impl TokenValue {
 
         let value_in_ref = Self::map_value_in_ref(32, Self::max_bit_size(param_type, abi_version));
 
-        for i in 0..array.len() {
+        for (i, item) in array.iter().enumerate() {
             let index = SliceData::load_builder((i as u32).write_to_new_cell()?)?;
 
-            let data =
-                Self::pack_cells_into_chain(array[i].write_to_cells(abi_version)?, abi_version)?;
+            let data = Self::pack_cells_into_chain(item.write_to_cells(abi_version)?, abi_version)?;
 
             if value_in_ref {
                 map.setref(index, &data.into_cell()?)?;
@@ -299,7 +298,7 @@ impl TokenValue {
 
     fn write_array(
         param_type: &ParamType,
-        value: &Vec<TokenValue>,
+        value: &[TokenValue],
         abi_version: &AbiVersion,
     ) -> Result<BuilderData> {
         let map = Self::put_array_into_dictionary(param_type, value, abi_version)?;
@@ -314,12 +313,12 @@ impl TokenValue {
 
     fn write_fixed_array(
         param_type: &ParamType,
-        value: &Vec<TokenValue>,
+        value: &[TokenValue],
         abi_version: &AbiVersion,
     ) -> Result<BuilderData> {
         let map = Self::put_array_into_dictionary(param_type, value, abi_version)?;
 
-        Ok(map.write_to_new_cell()?)
+        map.write_to_new_cell()
     }
 
     fn write_fixed_bytes(data: &[u8], abi_version: &AbiVersion) -> Result<BuilderData> {

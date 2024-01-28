@@ -889,11 +889,11 @@ mod types_check_tests {
     #[test]
     fn test_type_check() {
         fn assert_type_check(tokens: &[Token], params: &[Param]) {
-            assert!(Token::types_check(&tokens, params))
+            assert!(Token::types_check(tokens, params))
         }
 
         fn assert_not_type_check(tokens: &[Token], params: &[Param]) {
-            assert!(!Token::types_check(&tokens, params))
+            assert!(!Token::types_check(tokens, params))
         }
 
         let big_int = Int::new(123, 64);
@@ -1072,11 +1072,11 @@ mod default_values_tests {
 
     #[test]
     fn test_default_values() {
-        let param_types = vec![ParamType::Expire, ParamType::PublicKey];
+        let param_types = [ParamType::Expire, ParamType::PublicKey];
         let default_values = vec![TokenValue::Expire(0xffffffff), TokenValue::PublicKey(None)];
 
         for (param_type, value) in param_types.iter().zip(default_values) {
-            assert_eq!(TokenValue::get_default_value_for_header(&param_type).unwrap(), value);
+            assert_eq!(TokenValue::get_default_value_for_header(param_type).unwrap(), value);
         }
     }
 }

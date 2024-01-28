@@ -40,7 +40,7 @@ pub fn encode_function_call(
 ) -> Result<BuilderData> {
     let contract = Contract::load(abi.as_bytes())?;
 
-    let function = contract.function(&function)?;
+    let function = contract.function(function)?;
 
     let mut header_tokens = if let Some(header) = header {
         let v: Value = serde_json::from_str(header).map_err(|err| AbiError::SerdeError { err })?;
@@ -56,10 +56,10 @@ pub fn encode_function_call(
         );
     }
 
-    let v: Value = serde_json::from_str(&parameters).map_err(|err| AbiError::SerdeError { err })?;
+    let v: Value = serde_json::from_str(parameters).map_err(|err| AbiError::SerdeError { err })?;
     let input_tokens = Tokenizer::tokenize_all_params(function.input_params(), &v)?;
 
-    let address = address.map(|string| MsgAddressInt::from_str(&string)).transpose()?;
+    let address = address.map(MsgAddressInt::from_str).transpose()?;
 
     function.encode_input(&header_tokens, &input_tokens, internal, sign_key, address)
 }
@@ -86,10 +86,10 @@ pub fn prepare_function_call_for_sign(
         HashMap::new()
     };
 
-    let v: Value = serde_json::from_str(&parameters).map_err(|err| AbiError::SerdeError { err })?;
+    let v: Value = serde_json::from_str(parameters).map_err(|err| AbiError::SerdeError { err })?;
     let input_tokens = Tokenizer::tokenize_all_params(function.input_params(), &v)?;
 
-    let address = address.map(|string| MsgAddressInt::from_str(&string)).transpose()?;
+    let address = address.map(MsgAddressInt::from_str).transpose()?;
 
     function.create_unsigned_call(&header_tokens, &input_tokens, false, true, address)
 }
@@ -116,7 +116,7 @@ pub fn decode_function_response(
 ) -> Result<String> {
     let contract = Contract::load(abi.as_bytes())?;
 
-    let function = contract.function(&function)?;
+    let function = contract.function(function)?;
 
     let tokens = function.decode_output(response, internal, allow_partial)?;
 
@@ -198,7 +198,7 @@ pub fn get_signature_data(
     address: Option<&str>,
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     let contract = Contract::load(abi.as_bytes())?;
-    let address = address.map(|string| MsgAddressInt::from_str(string)).transpose()?;
+    let address = address.map(MsgAddressInt::from_str).transpose()?;
     contract.get_signature_data(cursor, address)
 }
 
@@ -209,8 +209,8 @@ pub fn encode_storage_fields(abi: &str, init_fields: Option<&str>) -> Result<Bui
 
     let init_fields = if let Some(init_fields) = init_fields {
         let v: Value =
-            serde_json::from_str(&init_fields).map_err(|err| AbiError::SerdeError { err })?;
-        Tokenizer::tokenize_optional_params(&contract.fields(), &v)?
+            serde_json::from_str(init_fields).map_err(|err| AbiError::SerdeError { err })?;
+        Tokenizer::tokenize_optional_params(contract.fields(), &v)?
     } else {
         HashMap::new()
     };

@@ -70,7 +70,7 @@ impl<'a> Deserialize<'a> for Param {
         if value.is_string() {
             let type_str = value.as_str().unwrap();
             let param_type: ParamType =
-                serde_json::from_value(value.clone()).map_err(|err| D::Error::custom(err))?;
+                serde_json::from_value(value.clone()).map_err(D::Error::custom)?;
             match param_type {
                 ParamType::Tuple(_)
                 | ParamType::Array(_)
@@ -86,7 +86,7 @@ impl<'a> Deserialize<'a> for Param {
             Ok(Self { name: type_str.to_owned(), kind: param_type })
         } else {
             let serde_param: SerdeParam =
-                serde_json::from_value(value).map_err(|err| D::Error::custom(err))?;
+                serde_json::from_value(value).map_err(D::Error::custom)?;
 
             Self::from_serde(serde_param).map_err(D::Error::custom)
         }

@@ -174,7 +174,7 @@ impl fmt::Display for TokenValue {
             TokenValue::Ref(value) => write!(f, "{}", value),
             TokenValue::PublicKey(key) => {
                 if let Some(key) = key {
-                    write!(f, "{}", hex::encode(&key))
+                    write!(f, "{}", hex::encode(key))
                 } else {
                     write!(f, "None")
                 }
@@ -204,7 +204,7 @@ impl TokenValue {
             TokenValue::Bool(_) => *param_type == ParamType::Bool,
             TokenValue::Tuple(ref arr) => {
                 if let ParamType::Tuple(params) = param_type {
-                    Token::types_check(arr, &params)
+                    Token::types_check(arr, params)
                 } else {
                     false
                 }
@@ -392,10 +392,10 @@ impl TokenValue {
                 .iter()
                 .fold(0, |acc, param| acc + Self::max_bit_size(&param.kind, abi_version)),
             ParamType::Optional(param_type) => {
-                if Self::is_large_optional(&param_type, abi_version) {
+                if Self::is_large_optional(param_type, abi_version) {
                     1
                 } else {
-                    1 + Self::max_bit_size(&param_type, abi_version)
+                    1 + Self::max_bit_size(param_type, abi_version)
                 }
             }
         }

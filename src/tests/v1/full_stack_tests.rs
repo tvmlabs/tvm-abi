@@ -199,7 +199,7 @@ fn test_signed_call() {
 
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&response.params).unwrap(),
-        serde_json::from_str::<serde_json::Value>(&expected_params).unwrap()
+        serde_json::from_str::<serde_json::Value>(expected_params).unwrap()
     );
     assert_eq!(response.function_name, "createArbitraryLimit");
 

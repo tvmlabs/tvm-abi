@@ -104,12 +104,12 @@ impl Function {
 
     /// Returns true if function has input parameters, false in not
     pub fn has_input(&self) -> bool {
-        self.inputs.len() != 0
+        !self.inputs.is_empty()
     }
 
     /// Returns true if function has output parameters, false in not
     pub fn has_output(&self) -> bool {
-        self.outputs.len() != 0
+        !self.outputs.is_empty()
     }
 
     /// Retruns ABI function signature
@@ -147,7 +147,7 @@ impl Function {
 
     pub fn calc_function_id(signature: &str) -> u32 {
         // Sha256 hash of signature
-        let function_hash = sha256_digest(&signature.as_bytes());
+        let function_hash = sha256_digest(signature.as_bytes());
 
         let mut bytes: [u8; 4] = [0; 4];
         bytes.copy_from_slice(&function_hash[..4]);
@@ -214,7 +214,7 @@ impl Function {
     pub fn decode_input_id(
         abi_version: &AbiVersion,
         cursor: SliceData,
-        header: &Vec<Param>,
+        header: &[Param],
         internal: bool,
     ) -> Result<u32> {
         let (_, id, _) = Self::decode_header(abi_version, cursor, header, internal)?;
@@ -223,7 +223,7 @@ impl Function {
 
     /// Decodes function id from contract answer
     pub fn decode_output_id(mut data: SliceData) -> Result<u32> {
-        Ok(data.get_next_u32()?)
+        data.get_next_u32()
     }
 
     /// Encodes provided function parameters into `BuilderData` containing ABI
@@ -259,8 +259,7 @@ impl Function {
 
     /// Encodes provided function return values into `BuilderData`
     pub fn encode_internal_output(&self, answer_id: u32, input: &[Token]) -> Result<BuilderData> {
-        let mut vec = vec![];
-        vec.push(answer_id.write_to_new_cell()?.into());
+        let vec = vec![answer_id.write_to_new_cell()?.into()];
         let builder = TokenValue::pack_values_into_chain(input, vec, &self.abi_version)?;
         Ok(builder)
     }
@@ -299,7 +298,7 @@ impl Function {
     pub fn decode_header(
         abi_version: &AbiVersion,
         cursor: SliceData,
-        header: &Vec<Param>,
+        header: &[Param],
         internal: bool,
     ) -> Result<(Vec<Token>, u32, Cursor)> {
         let mut tokens = vec![];
@@ -343,12 +342,10 @@ impl Function {
         let signature = if abi_version == &ABI_VERSION_1_0 {
             SliceData::load_cell(cursor.checked_drain_reference()?)?
                 .get_next_bytes(ED25519_SIGNATURE_LENGTH)?
+        } else if cursor.get_next_bit()? {
+            cursor.get_next_bytes(ED25519_SIGNATURE_LENGTH)?
         } else {
-            if cursor.get_next_bit()? {
-                cursor.get_next_bytes(ED25519_SIGNATURE_LENGTH)?
-            } else {
-                return Err(AbiError::InvalidData { msg: "No signature".to_owned() }.into());
-            }
+            return Err(AbiError::InvalidData { msg: "No signature".to_owned() }.into());
         };
 
         let hash = if abi_version >= &ABI_VERSION_2_3 {
