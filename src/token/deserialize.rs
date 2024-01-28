@@ -1,33 +1,45 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
-use crate::{
-    contract::{AbiVersion, ABI_VERSION_1_0, ABI_VERSION_2_0, ABI_VERSION_2_2, ABI_VERSION_2_4},
-    error::AbiError,
-    int::{Int, Uint},
-    param::Param,
-    param_type::ParamType,
-    token::{Token, TokenValue},
-};
+use std::collections::BTreeMap;
+use std::convert::TryInto;
 
-use num_bigint::{BigInt, BigUint};
+use num_bigint::BigInt;
+use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 use serde_json;
-use std::{collections::BTreeMap, convert::TryInto};
-use tvm_block::{types::Grams, MsgAddress};
-use tvm_types::{
-    error, fail, BuilderData, Cell, HashmapE, HashmapType, IBitstring, Result, SliceData,
-};
+use tvm_block::types::Grams;
+use tvm_block::MsgAddress;
+use tvm_types::error;
+use tvm_types::fail;
+use tvm_types::BuilderData;
+use tvm_types::Cell;
+use tvm_types::HashmapE;
+use tvm_types::HashmapType;
+use tvm_types::IBitstring;
+use tvm_types::Result;
+use tvm_types::SliceData;
+
+use crate::contract::AbiVersion;
+use crate::contract::ABI_VERSION_1_0;
+use crate::contract::ABI_VERSION_2_0;
+use crate::contract::ABI_VERSION_2_2;
+use crate::contract::ABI_VERSION_2_4;
+use crate::error::AbiError;
+use crate::int::Int;
+use crate::int::Uint;
+use crate::param::Param;
+use crate::param_type::ParamType;
+use crate::token::Token;
+use crate::token::TokenValue;
 
 #[derive(Clone, Debug, Default)]
 pub struct Cursor {
@@ -38,11 +50,7 @@ pub struct Cursor {
 
 impl From<SliceData> for Cursor {
     fn from(slice: SliceData) -> Self {
-        Self {
-            used_bits: 0,
-            used_refs: 0,
-            slice,
-        }
+        Self { used_bits: 0, used_refs: 0, slice }
     }
 }
 
@@ -150,9 +158,9 @@ impl TokenValue {
             }
         } else {
             if new_cell != orig_cell {
-                // following error will never appear because SliceData::cell_opt function returns
-                // None only if slice contains just data without refs. And if there is no refs then
-                // cursor cell can not change
+                // following error will never appear because SliceData::cell_opt function
+                // returns None only if slice contains just data without refs.
+                // And if there is no refs then cursor cell can not change
                 let orig_cell = orig_cell.ok_or_else(|| AbiError::DeserializationError {
                     msg: "No original cell in layout check",
                     cursor: cursor.slice.clone(),
@@ -368,9 +376,7 @@ impl TokenValue {
             let key = Self::read_from(key_type, key.into(), true, abi_version, allow_partial)?.0;
             let key = serde_json::to_value(&key)?
                 .as_str()
-                .ok_or(AbiError::InvalidData {
-                    msg: "Non-ordinary key".to_owned(),
-                })?
+                .ok_or(AbiError::InvalidData { msg: "Non-ordinary key".to_owned() })?
                 .to_owned();
             if value_in_ref {
                 value = SliceData::load_cell(value.checked_drain_reference()?)?;
@@ -380,10 +386,7 @@ impl TokenValue {
             new_map.insert(key, value);
             Ok(true)
         })?;
-        Ok((
-            TokenValue::Map(key_type.clone(), value_type.clone(), new_map),
-            cursor,
-        ))
+        Ok((TokenValue::Map(key_type.clone(), value_type.clone(), new_map), cursor))
     }
 
     fn read_bytes_from_chain(
@@ -473,9 +476,7 @@ impl TokenValue {
         cursor = find_next_bits(cursor, 1)?;
         if cursor.get_next_bit()? {
             let (vec, cursor) = get_next_bits_from_chain(cursor, 256)?;
-            let bytes = vec
-                .try_into()
-                .map_err(|_| error!("Invalid public key length"))?;
+            let bytes = vec.try_into().map_err(|_| error!("Invalid public key length"))?;
             Ok((TokenValue::PublicKey(Some(bytes)), cursor))
         } else {
             Ok((TokenValue::PublicKey(None), cursor))
@@ -500,17 +501,11 @@ impl TokenValue {
                     abi_version,
                     allow_partial,
                 )?;
-                Ok((
-                    TokenValue::Optional(inner_type.clone(), Some(Box::new(result))),
-                    cursor,
-                ))
+                Ok((TokenValue::Optional(inner_type.clone(), Some(Box::new(result))), cursor))
             } else {
                 let (result, cursor) =
                     Self::read_from(inner_type, cursor.into(), last, abi_version, allow_partial)?;
-                Ok((
-                    TokenValue::Optional(inner_type.clone(), Some(Box::new(result))),
-                    cursor.slice,
-                ))
+                Ok((TokenValue::Optional(inner_type.clone(), Some(Box::new(result))), cursor.slice))
             }
         } else {
             Ok((TokenValue::Optional(inner_type.clone(), None), cursor))
@@ -562,10 +557,7 @@ impl TokenValue {
                 Self::read_from(&param.kind, cursor, last, abi_version, allow_partial)?;
 
             cursor = new_cursor;
-            tokens.push(Token {
-                name: param.name.clone(),
-                value: token_value,
-            });
+            tokens.push(Token { name: param.name.clone(), value: token_value });
         }
 
         Ok((tokens, cursor))

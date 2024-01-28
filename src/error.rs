@@ -1,15 +1,13 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 use crate::contract::AbiVersion;
 
@@ -19,10 +17,7 @@ pub enum AbiError {
     InvalidData { msg: String },
 
     #[fail(display = "{} is not supported in ABI v{}", subject, version)]
-    NotSupported {
-        subject: String,
-        version: AbiVersion,
-    },
+    NotSupported { subject: String, version: AbiVersion },
 
     #[fail(display = "Invalid name: {}", name)]
     InvalidName { name: String },
@@ -31,49 +26,25 @@ pub enum AbiError {
     InvalidFunctionId { id: u32 },
 
     #[fail(display = "Deserialization error {}: {}", msg, cursor)]
-    DeserializationError {
-        msg: &'static str,
-        cursor: tvm_types::SliceData,
-    },
+    DeserializationError { msg: &'static str, cursor: tvm_types::SliceData },
 
     #[fail(display = "Not implemented")]
     NotImplemented,
 
-    #[fail(
-        display = "Wrong parameters count. Expected: {}, provided: {}",
-        expected, provided
-    )]
+    #[fail(display = "Wrong parameters count. Expected: {}, provided: {}", expected, provided)]
     WrongParametersCount { expected: usize, provided: usize },
 
     #[fail(display = "Token types do not match expected function parameter types")]
     WrongParameterType,
 
-    #[fail(
-        display = "Wrong data format in `{}` parameter:\n{}\n{} expected",
-        name, val, expected
-    )]
-    WrongDataFormat {
-        val: serde_json::Value,
-        name: String,
-        expected: String,
-    },
+    #[fail(display = "Wrong data format in `{}` parameter:\n{}\n{} expected", name, val, expected)]
+    WrongDataFormat { val: serde_json::Value, name: String, expected: String },
 
-    #[fail(
-        display = "Invalid parameter `{}` length, expected {}:\n{}",
-        name, expected, val
-    )]
-    InvalidParameterLength {
-        name: String,
-        val: serde_json::Value,
-        expected: String,
-    },
+    #[fail(display = "Invalid parameter `{}` length, expected {}:\n{}", name, expected, val)]
+    InvalidParameterLength { name: String, val: serde_json::Value, expected: String },
 
     #[fail(display = "Invalid parameter `{}` value:\n{}\n{}", name, val, err)]
-    InvalidParameterValue {
-        name: String,
-        val: serde_json::Value,
-        err: String,
-    },
+    InvalidParameterValue { name: String, val: serde_json::Value, err: String },
 
     #[fail(display = "Incomplete deserialization error")]
     IncompleteDeserializationError,

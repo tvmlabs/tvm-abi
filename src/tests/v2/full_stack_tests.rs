@@ -1,26 +1,27 @@
-/*
-* Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
-
-use tvm_block::{Deserializable, MsgAddressInt, Serializable};
-use tvm_types::dictionary::HashmapE;
-use tvm_types::{
-    ed25519_generate_private_key, ed25519_verify, BuilderData, IBitstring, SliceData,
-    ED25519_SIGNATURE_LENGTH,
-};
-
-use crate::json_abi::*;
+// Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 use serde_json::json;
+use tvm_block::Deserializable;
+use tvm_block::MsgAddressInt;
+use tvm_block::Serializable;
+use tvm_types::dictionary::HashmapE;
+use tvm_types::ed25519_generate_private_key;
+use tvm_types::ed25519_verify;
+use tvm_types::BuilderData;
+use tvm_types::IBitstring;
+use tvm_types::SliceData;
+use tvm_types::ED25519_SIGNATURE_LENGTH;
+
+use crate::json_abi::*;
 
 const WALLET_ABI: &str = r#"{
     "ABI version": 2,
@@ -244,9 +245,7 @@ fn test_signed_call() {
     let mut expected_tree = BuilderData::new();
     expected_tree.append_u32(0xffffffff).unwrap(); // expire
     expected_tree.append_bit_one().unwrap(); // Some for public key
-    expected_tree
-        .append_raw(&public_key, public_key.len() * 8)
-        .unwrap();
+    expected_tree.append_raw(&public_key, public_key.len() * 8).unwrap();
     expected_tree.append_u32(0x2238B58A).unwrap(); // function id
     expected_tree.append_raw(&[0; 15], 15 * 8).unwrap(); // value
     expected_tree.append_u8(12).unwrap(); // value
@@ -302,16 +301,9 @@ fn test_not_signed_call() {
         "expire": 123
     }"#;
 
-    let test_tree = encode_function_call(
-        WALLET_ABI,
-        "getLimit",
-        Some(header),
-        params,
-        false,
-        None,
-        None,
-    )
-    .unwrap();
+    let test_tree =
+        encode_function_call(WALLET_ABI, "getLimit", Some(header), params, false, None, None)
+            .unwrap();
 
     let mut expected_tree = BuilderData::new();
     expected_tree.append_bit_zero().unwrap(); // None for signature
@@ -329,16 +321,9 @@ fn test_not_signed_call() {
 
     assert_eq!(test_tree, expected_tree);
 
-    let test_tree_v23 = encode_function_call(
-        WALLET_ABI_V23,
-        "getLimit",
-        Some(header),
-        params,
-        false,
-        None,
-        None,
-    )
-    .unwrap();
+    let test_tree_v23 =
+        encode_function_call(WALLET_ABI_V23, "getLimit", Some(header), params, false, None, None)
+            .unwrap();
     assert_eq!(test_tree_v23, expected_tree);
 }
 
@@ -436,10 +421,7 @@ fn test_update_decode_contract_data() {
     assert_eq!(
         subscription_slice,
         SliceData::load_cell(
-            MsgAddressInt::with_standart(None, 0, [0x11; 32].into())
-                .unwrap()
-                .serialize()
-                .unwrap()
+            MsgAddressInt::with_standart(None, 0, [0x11; 32].into()).unwrap().serialize().unwrap()
         )
         .unwrap()
     );
@@ -472,9 +454,7 @@ const ABI_WITH_FIELDS: &str = r#"{
 #[test]
 fn test_decode_storage_fields() {
     let mut storage = BuilderData::new();
-    storage
-        .append_bitstring(&[vec![0x55; 32], vec![0x80]].join(&[][..]))
-        .unwrap();
+    storage.append_bitstring(&[vec![0x55; 32], vec![0x80]].join(&[][..])).unwrap();
     storage.append_u64(123).unwrap();
     storage.append_bit_one().unwrap();
     storage.append_u32(456).unwrap();
@@ -512,13 +492,9 @@ fn test_add_signature_full_v23() {
     let signature = sign_key.sign(&data_to_sign);
 
     let msg = SliceData::load_builder(msg).unwrap();
-    let msg = add_sign_to_function_call(
-        WALLET_ABI_V23,
-        &signature,
-        Some(&sign_key.verifying_key()),
-        msg,
-    )
-    .unwrap();
+    let msg =
+        add_sign_to_function_call(WALLET_ABI_V23, &signature, Some(&sign_key.verifying_key()), msg)
+            .unwrap();
     let msg = SliceData::load_builder(msg).unwrap();
 
     let decoded = decode_unknown_function_call(WALLET_ABI_V23, msg, false, false).unwrap();
@@ -565,9 +541,7 @@ fn test_signed_call_v23() {
     let mut expected_tree = BuilderData::new();
     expected_tree.append_u32(0xffffffff).unwrap(); // expire
     expected_tree.append_bit_one().unwrap(); // Some for public key
-    expected_tree
-        .append_raw(&public_key, public_key.len() * 8)
-        .unwrap();
+    expected_tree.append_raw(&public_key, public_key.len() * 8).unwrap();
     expected_tree.append_u32(0x2238B58A).unwrap(); // function id
 
     let mut expected_tree_child = BuilderData::new();
@@ -575,9 +549,7 @@ fn test_signed_call_v23() {
     expected_tree_child.append_u8(12).unwrap(); // value
     expected_tree_child.append_u32(30).unwrap(); // period
 
-    expected_tree
-        .checked_append_reference(expected_tree_child.into_cell().unwrap())
-        .unwrap();
+    expected_tree.checked_append_reference(expected_tree_child.into_cell().unwrap()).unwrap();
 
     let (test_sign, test_hash) =
         get_signature_data(WALLET_ABI_V23, test_tree.clone(), Some(address)).unwrap();
@@ -588,10 +560,7 @@ fn test_signed_call_v23() {
 
     assert_eq!(test_tree, SliceData::load_builder(expected_tree).unwrap());
 
-    let mut signed_tree = MsgAddressInt::from_str(address)
-        .unwrap()
-        .write_to_new_cell()
-        .unwrap();
+    let mut signed_tree = MsgAddressInt::from_str(address).unwrap().write_to_new_cell().unwrap();
     signed_tree.append_builder(&test_tree.as_builder()).unwrap();
 
     let hash = signed_tree.into_cell().unwrap().repr_hash();
@@ -737,27 +706,31 @@ fn test_encode_storage_fields() {
 
     assert_eq!(test_tree, expected_tree);
 
-    assert!(dbg!(encode_storage_fields(
-        ABI_WITH_FIELDS_V24,
-        Some(
-            r#"{
+    assert!(
+        dbg!(encode_storage_fields(
+            ABI_WITH_FIELDS_V24,
+            Some(
+                r#"{
             "ok": true
         }"#
-        ),
-    ))
-    .is_err());
+            ),
+        ))
+        .is_err()
+    );
 
-    assert!(dbg!(encode_storage_fields(
-        ABI_WITH_FIELDS_V24,
-        Some(
-            r#"{
+    assert!(
+        dbg!(encode_storage_fields(
+            ABI_WITH_FIELDS_V24,
+            Some(
+                r#"{
             "__pubkey": "0x11c0a428b6768562df09db05326595337dbb5f8dde0e128224d4df48df760f17",
             "__timestamp": 123,
             "ok": true
         }"#
-        ),
-    ))
-    .is_err());
+            ),
+        ))
+        .is_err()
+    );
 }
 
 const ABI_WRONG_STORAGE_LAYOUT: &str = r#"{
@@ -788,10 +761,12 @@ fn test_wrong_storage_layout() {
     let image = include_bytes!("FairNFTCollection.tvc");
     let image = tvm_block::StateInit::construct_from_bytes(image).unwrap();
 
-    assert!(decode_storage_fields(
-        ABI_WRONG_STORAGE_LAYOUT,
-        SliceData::load_cell(image.data.unwrap()).unwrap(),
-        false
-    )
-    .is_ok());
+    assert!(
+        decode_storage_fields(
+            ABI_WRONG_STORAGE_LAYOUT,
+            SliceData::load_cell(image.data.unwrap()).unwrap(),
+            false
+        )
+        .is_ok()
+    );
 }

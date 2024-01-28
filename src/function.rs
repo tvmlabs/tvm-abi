@@ -1,32 +1,45 @@
-/*
-* Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 //! Contract function call builder.
 
-use crate::{
-    contract::{AbiVersion, SerdeFunction, ABI_VERSION_1_0, ABI_VERSION_2_3},
-    error::AbiError,
-    param::Param,
-    token::{Cursor, SerializedValue, Token, TokenValue},
-    ParamType, PublicKeyData, SignatureData,
-};
-
 use std::collections::HashMap;
-use tvm_block::{MsgAddressInt, Serializable};
-use tvm_types::{
-    error, fail, sha256_digest, BuilderData, Cell, Ed25519PrivateKey, IBitstring, Result,
-    SliceData, ED25519_SIGNATURE_LENGTH, MAX_DATA_BYTES,
-};
+
+use tvm_block::MsgAddressInt;
+use tvm_block::Serializable;
+use tvm_types::error;
+use tvm_types::fail;
+use tvm_types::sha256_digest;
+use tvm_types::BuilderData;
+use tvm_types::Cell;
+use tvm_types::Ed25519PrivateKey;
+use tvm_types::IBitstring;
+use tvm_types::Result;
+use tvm_types::SliceData;
+use tvm_types::ED25519_SIGNATURE_LENGTH;
+use tvm_types::MAX_DATA_BYTES;
+
+use crate::contract::AbiVersion;
+use crate::contract::SerdeFunction;
+use crate::contract::ABI_VERSION_1_0;
+use crate::contract::ABI_VERSION_2_3;
+use crate::error::AbiError;
+use crate::param::Param;
+use crate::token::Cursor;
+use crate::token::SerializedValue;
+use crate::token::Token;
+use crate::token::TokenValue;
+use crate::ParamType;
+use crate::PublicKeyData;
+use crate::SignatureData;
 
 /// Contract function specification.
 #[derive(Debug, Clone, PartialEq)]
@@ -129,10 +142,7 @@ impl Function {
             .collect::<Vec<String>>()
             .join(",");
 
-        format!(
-            "{}({})({})v{}",
-            self.name, input_types, output_types, self.abi_version.major
-        )
+        format!("{}({})({})v{}", self.name, input_types, output_types, self.abi_version.major)
     }
 
     pub fn calc_function_id(signature: &str) -> u32 {
@@ -141,7 +151,7 @@ impl Function {
 
         let mut bytes: [u8; 4] = [0; 4];
         bytes.copy_from_slice(&function_hash[..4]);
-        //println!("{}: {:X}", signature, u32::from_be_bytes(bytes));
+        // println!("{}: {:X}", signature, u32::from_be_bytes(bytes));
 
         u32::from_be_bytes(bytes)
     }
@@ -216,7 +226,8 @@ impl Function {
         Ok(data.get_next_u32()?)
     }
 
-    /// Encodes provided function parameters into `BuilderData` containing ABI contract call
+    /// Encodes provided function parameters into `BuilderData` containing ABI
+    /// contract call
     pub fn encode_input(
         &self,
         header: &HashMap<String, TokenValue>,
@@ -336,10 +347,7 @@ impl Function {
             if cursor.get_next_bit()? {
                 cursor.get_next_bytes(ED25519_SIGNATURE_LENGTH)?
             } else {
-                return Err(AbiError::InvalidData {
-                    msg: "No signature".to_owned(),
-                }
-                .into());
+                return Err(AbiError::InvalidData { msg: "No signature".to_owned() }.into());
             }
         };
 
@@ -355,8 +363,9 @@ impl Function {
         Ok((signature, hash))
     }
 
-    /// Encodes provided function parameters into `BuilderData` containing ABI contract call.
-    /// `BuilderData` is prepared for signing. Sign should be the added by `add_sign_to_function_call` function
+    /// Encodes provided function parameters into `BuilderData` containing ABI
+    /// contract call. `BuilderData` is prepared for signing. Sign should be
+    /// the added by `add_sign_to_function_call` function
     pub fn create_unsigned_call(
         &self,
         header: &HashMap<String, TokenValue>,

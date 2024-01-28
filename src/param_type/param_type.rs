@@ -1,25 +1,28 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 //! Function and event param types.
 
-use crate::contract::{
-    AbiVersion, ABI_VERSION_1_0, ABI_VERSION_2_0, ABI_VERSION_2_1, ABI_VERSION_2_4,
-};
-use crate::{AbiError, Param};
 use std::fmt;
 
-use tvm_types::{error, Result};
+use tvm_types::error;
+use tvm_types::Result;
+
+use crate::contract::AbiVersion;
+use crate::contract::ABI_VERSION_1_0;
+use crate::contract::ABI_VERSION_2_0;
+use crate::contract::ABI_VERSION_2_1;
+use crate::contract::ABI_VERSION_2_4;
+use crate::AbiError;
+use crate::Param;
 
 /// Function and event param types.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -95,11 +98,9 @@ impl ParamType {
                 format!("{}[{}]", param_type.type_signature(), size)
             }
             ParamType::Cell => "cell".to_owned(),
-            ParamType::Map(key_type, value_type) => format!(
-                "map({},{})",
-                key_type.type_signature(),
-                value_type.type_signature()
-            ),
+            ParamType::Map(key_type, value_type) => {
+                format!("map({},{})", key_type.type_signature(), value_type.type_signature())
+            }
             ParamType::Address => format!("address"),
             ParamType::Bytes => format!("bytes"),
             ParamType::FixedBytes(size) => format!("fixedbytes{}", size),

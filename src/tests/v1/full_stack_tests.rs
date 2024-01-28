@@ -1,19 +1,21 @@
-/*
-* Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
-use tvm_block::{MsgAddressInt, Serializable};
+use tvm_block::MsgAddressInt;
+use tvm_block::Serializable;
 use tvm_types::dictionary::HashmapE;
-use tvm_types::{ed25519_generate_private_key, BuilderData, Ed25519PublicKey, SliceData};
+use tvm_types::ed25519_generate_private_key;
+use tvm_types::BuilderData;
+use tvm_types::Ed25519PublicKey;
+use tvm_types::SliceData;
 
 use crate::json_abi::*;
 
@@ -140,9 +142,7 @@ fn test_constructor_call() {
 
     let mut expected_tree =
         BuilderData::with_bitstring(vec![0x54, 0xc1, 0xf4, 0x0f, 0x80]).unwrap();
-    expected_tree
-        .checked_prepend_reference(Default::default())
-        .unwrap();
+    expected_tree.checked_prepend_reference(Default::default()).unwrap();
 
     let test_tree = SliceData::load_builder(test_tree).unwrap();
     let expected_tree = SliceData::load_builder(expected_tree).unwrap();
@@ -219,9 +219,11 @@ fn test_signed_call() {
 
     let hash = test_tree.into_cell().repr_hash();
     assert_eq!(hash.clone().into_vec(), test_hash);
-    assert!(Ed25519PublicKey::from_bytes(&key.verifying_key())
-        .unwrap()
-        .verify(hash.as_slice(), &sign.try_into().unwrap()));
+    assert!(
+        Ed25519PublicKey::from_bytes(&key.verifying_key())
+            .unwrap()
+            .verify(hash.as_slice(), &sign.try_into().unwrap())
+    );
 
     let expected_response = r#"{"value0":"0"}"#;
 
@@ -258,24 +260,15 @@ fn test_not_signed_call() {
     }"#;
     let header = "{}";
 
-    let test_tree = encode_function_call(
-        WALLET_ABI,
-        "getLimit",
-        Some(header),
-        params,
-        false,
-        None,
-        None,
-    )
-    .unwrap();
+    let test_tree =
+        encode_function_call(WALLET_ABI, "getLimit", Some(header), params, false, None, None)
+            .unwrap();
 
     let mut expected_tree = BuilderData::with_bitstring(vec![
         0x23, 0xF3, 0x3E, 0x2F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x80,
     ])
     .unwrap();
-    expected_tree
-        .checked_prepend_reference(Default::default())
-        .unwrap();
+    expected_tree.checked_prepend_reference(Default::default()).unwrap();
 
     assert_eq!(test_tree, expected_tree);
 }
@@ -372,10 +365,7 @@ fn test_update_decode_contract_data() {
 
     assert_eq!(
         subscription_slice.into_cell(),
-        MsgAddressInt::with_standart(None, 0, [0x11; 32].into())
-            .unwrap()
-            .serialize()
-            .unwrap()
+        MsgAddressInt::with_standart(None, 0, [0x11; 32].into()).unwrap().serialize().unwrap()
     );
 
     let owner_slice = new_map

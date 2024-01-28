@@ -1,34 +1,36 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
-use crate::{
-    param_type::ParamType,
-    token::{Token, TokenValue},
-    PublicKeyData,
-};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
 
-use num_bigint::{BigInt, BigUint};
-use serde::ser::{Serialize, SerializeMap, Serializer};
-use std::collections::{BTreeMap, HashMap};
-use tvm_types::{write_boc, Cell, Result};
+use num_bigint::BigInt;
+use num_bigint::BigUint;
+use serde::ser::Serialize;
+use serde::ser::SerializeMap;
+use serde::ser::Serializer;
+use tvm_types::write_boc;
+use tvm_types::Cell;
+use tvm_types::Result;
+
+use crate::param_type::ParamType;
+use crate::token::Token;
+use crate::token::TokenValue;
+use crate::PublicKeyData;
 
 pub struct Detokenizer;
 
 impl Detokenizer {
     pub fn detokenize(tokens: &[Token]) -> Result<String> {
-        Ok(serde_json::to_string(&Self::detokenize_to_json_value(
-            tokens,
-        )?)?)
+        Ok(serde_json::to_string(&Self::detokenize_to_json_value(tokens)?)?)
     }
 
     pub fn detokenize_to_json_value(tokens: &[Token]) -> Result<serde_json::Value> {
@@ -36,9 +38,7 @@ impl Detokenizer {
     }
 
     pub fn detokenize_optional(tokens: &HashMap<String, TokenValue>) -> Result<String> {
-        Ok(serde_json::to_string(
-            &Self::detokenize_optional_to_json_value(tokens)?,
-        )?)
+        Ok(serde_json::to_string(&Self::detokenize_optional_to_json_value(tokens)?)?)
     }
 
     pub fn detokenize_optional_to_json_value(

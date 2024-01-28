@@ -1,20 +1,22 @@
-/*
-* Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
-use tvm_block::{Deserializable, StateInit};
-use tvm_types::{read_single_root_boc, Result, SliceData};
+use tvm_block::Deserializable;
+use tvm_block::StateInit;
+use tvm_types::read_single_root_boc;
+use tvm_types::Result;
+use tvm_types::SliceData;
 
-use crate::{Contract, PublicKeyData};
+use crate::Contract;
+use crate::PublicKeyData;
 
 const DEPOOL_TVC: &[u8] = include_bytes!("data/DePool.tvc");
 const PUB_KEY: PublicKeyData = [

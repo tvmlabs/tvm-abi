@@ -1,20 +1,23 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
-use crate::{Contract, DataItem, Event, Function, Param, ParamType};
 use std::collections::HashMap;
 
 use crate::contract::ABI_VERSION_2_4;
+use crate::Contract;
+use crate::DataItem;
+use crate::Event;
+use crate::Function;
+use crate::Param;
+use crate::ParamType;
 
 const TEST_ABI: &str = r#"
 {
@@ -81,22 +84,10 @@ fn test_abi_parse() {
 
     let mut functions = HashMap::new();
     let header = vec![
-        Param {
-            name: "time".into(),
-            kind: ParamType::Time,
-        },
-        Param {
-            name: "expire".into(),
-            kind: ParamType::Expire,
-        },
-        Param {
-            name: "pubkey".into(),
-            kind: ParamType::PublicKey,
-        },
-        Param {
-            name: "a".into(),
-            kind: ParamType::Uint(64),
-        },
+        Param { name: "time".into(), kind: ParamType::Time },
+        Param { name: "expire".into(), kind: ParamType::Expire },
+        Param { name: "pubkey".into(), kind: ParamType::PublicKey },
+        Param { name: "a".into(), kind: ParamType::Uint(64) },
     ];
     let abi_version = ABI_VERSION_2_4;
 
@@ -107,28 +98,16 @@ fn test_abi_parse() {
             name: "input_and_output".to_owned(),
             header: header.clone(),
             inputs: vec![
-                Param {
-                    name: "a".to_owned(),
-                    kind: ParamType::Uint(64),
-                },
+                Param { name: "a".to_owned(), kind: ParamType::Uint(64) },
                 Param {
                     name: "b".to_owned(),
                     kind: ParamType::Array(Box::new(ParamType::Uint(8))),
                 },
-                Param {
-                    name: "c".to_owned(),
-                    kind: ParamType::Bytes,
-                },
+                Param { name: "c".to_owned(), kind: ParamType::Bytes },
             ],
             outputs: vec![
-                Param {
-                    name: "a".to_owned(),
-                    kind: ParamType::Int(16),
-                },
-                Param {
-                    name: "b".to_owned(),
-                    kind: ParamType::Uint(8),
-                },
+                Param { name: "a".to_owned(), kind: ParamType::Int(16) },
+                Param { name: "b".to_owned(), kind: ParamType::Uint(8) },
             ],
             input_id: Function::calc_function_id(
                 "input_and_output(uint64,uint8[],bytes)(int16,uint8)v2",
@@ -145,10 +124,7 @@ fn test_abi_parse() {
             abi_version: abi_version.clone(),
             name: "no_output".to_owned(),
             header: header.clone(),
-            inputs: vec![Param {
-                name: "a".to_owned(),
-                kind: ParamType::Uint(15),
-            }],
+            inputs: vec![Param { name: "a".to_owned(), kind: ParamType::Uint(15) }],
             outputs: vec![],
             input_id: Function::calc_function_id("no_output(uint15)()v2") & 0x7FFFFFFF,
             output_id: Function::calc_function_id("no_output(uint15)()v2") | 0x80000000,
@@ -162,10 +138,7 @@ fn test_abi_parse() {
             name: "no_input".to_owned(),
             header: header.clone(),
             inputs: vec![],
-            outputs: vec![Param {
-                name: "a".to_owned(),
-                kind: ParamType::Uint(8),
-            }],
+            outputs: vec![Param { name: "a".to_owned(), kind: ParamType::Uint(8) }],
             input_id: Function::calc_function_id("no_input()(uint8)v2") & 0x7FFFFFFF,
             output_id: Function::calc_function_id("no_input()(uint8)v2") | 0x80000000,
         },
@@ -204,10 +177,7 @@ fn test_abi_parse() {
         Event {
             abi_version: abi_version.clone(),
             name: "input".to_owned(),
-            inputs: vec![Param {
-                name: "a".to_owned(),
-                kind: ParamType::Uint(64),
-            }],
+            inputs: vec![Param { name: "a".to_owned(), kind: ParamType::Uint(64) }],
             id: Function::calc_function_id("input(uint64)v2") & 0x7FFFFFFF,
         },
     );
@@ -236,37 +206,18 @@ fn test_abi_parse() {
 
     data.insert(
         "a".to_owned(),
-        DataItem {
-            value: Param {
-                name: "a".to_owned(),
-                kind: ParamType::Uint(256),
-            },
-            key: 100,
-        },
+        DataItem { value: Param { name: "a".to_owned(), kind: ParamType::Uint(256) }, key: 100 },
     );
 
     let fields = vec![
-        Param {
-            name: "a".into(),
-            kind: ParamType::Uint(32),
-        },
-        Param {
-            name: "b".into(),
-            kind: ParamType::Int(128),
-        },
+        Param { name: "a".into(), kind: ParamType::Uint(32) },
+        Param { name: "b".into(), kind: ParamType::Int(128) },
     ];
 
     let init_fields = vec!["b".to_owned()].into_iter().collect();
 
-    let expected_contract = Contract {
-        abi_version,
-        header,
-        functions,
-        events,
-        data,
-        fields,
-        init_fields,
-    };
+    let expected_contract =
+        Contract { abi_version, header, functions, events, data, fields, init_fields };
 
     assert_eq!(parsed_contract, expected_contract);
 }

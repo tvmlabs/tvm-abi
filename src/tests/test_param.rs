@@ -1,23 +1,26 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
-
-use crate::token::Detokenizer;
-use crate::{Function, Int, Param, ParamType, Token, TokenValue, Uint};
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 use tvm_types::BuilderData;
 use tvm_types::IBitstring;
 
 use crate::contract::ABI_VERSION_2_0;
+use crate::token::Detokenizer;
+use crate::Function;
+use crate::Int;
+use crate::Param;
+use crate::ParamType;
+use crate::Token;
+use crate::TokenValue;
+use crate::Uint;
 
 #[test]
 fn int_json_representation() {
@@ -78,10 +81,7 @@ fn test_encode_internal_output() {
         )
         .unwrap();
     expected_tree
-        .append_raw(
-            &hex::decode("00000000000000000000000000000001").unwrap(),
-            16 * 8,
-        )
+        .append_raw(&hex::decode("00000000000000000000000000000001").unwrap(), 16 * 8)
         .unwrap();
     expected_tree
         .append_raw(
@@ -102,13 +102,7 @@ fn test_simple_param_deserialization() {
 
     let deserialized: Param = serde_json::from_str(s).unwrap();
 
-    assert_eq!(
-        deserialized,
-        Param {
-            name: "a".to_owned(),
-            kind: ParamType::Int(9),
-        }
-    );
+    assert_eq!(deserialized, Param { name: "a".to_owned(), kind: ParamType::Int(9) });
 }
 
 #[test]
@@ -135,14 +129,8 @@ fn test_tuple_param_deserialization() {
         Param {
             name: "a".to_owned(),
             kind: ParamType::Tuple(vec![
-                Param {
-                    name: "a".to_owned(),
-                    kind: ParamType::Int(8)
-                },
-                Param {
-                    name: "b".to_owned(),
-                    kind: ParamType::Int(8)
-                },
+                Param { name: "a".to_owned(), kind: ParamType::Int(8) },
+                Param { name: "b".to_owned(), kind: ParamType::Int(8) },
             ]),
         }
     );
@@ -182,22 +170,13 @@ fn test_tuples_array_deserialization() {
         Param {
             name: "a".to_owned(),
             kind: ParamType::Array(Box::new(ParamType::Tuple(vec![
-                Param {
-                    name: "a".to_owned(),
-                    kind: ParamType::Bool
-                },
+                Param { name: "a".to_owned(), kind: ParamType::Bool },
                 Param {
                     name: "b".to_owned(),
                     kind: ParamType::FixedArray(
                         Box::new(ParamType::Tuple(vec![
-                            Param {
-                                name: "a".to_owned(),
-                                kind: ParamType::Uint(8)
-                            },
-                            Param {
-                                name: "b".to_owned(),
-                                kind: ParamType::Int(15)
-                            },
+                            Param { name: "a".to_owned(), kind: ParamType::Uint(8) },
+                            Param { name: "b".to_owned(), kind: ParamType::Int(15) },
                         ])),
                         5
                     )
@@ -236,14 +215,8 @@ fn test_tuples_array_map_map() {
                     Box::new(ParamType::Uint(32)),
                     Box::new(ParamType::FixedArray(
                         Box::new(ParamType::Array(Box::new(ParamType::Tuple(vec![
-                            Param {
-                                name: "a".to_owned(),
-                                kind: ParamType::Uint(256)
-                            },
-                            Param {
-                                name: "b".to_owned(),
-                                kind: ParamType::Uint(256)
-                            },
+                            Param { name: "a".to_owned(), kind: ParamType::Uint(256) },
+                            Param { name: "b".to_owned(), kind: ParamType::Uint(256) },
                         ])))),
                         5
                     )),
@@ -286,14 +259,8 @@ fn test_optional_tuple_param_deserialization() {
         Param {
             name: "a".to_owned(),
             kind: ParamType::Optional(Box::new(ParamType::Tuple(vec![
-                Param {
-                    name: "a".to_owned(),
-                    kind: ParamType::Int(8)
-                },
-                Param {
-                    name: "b".to_owned(),
-                    kind: ParamType::Int(8)
-                },
+                Param { name: "a".to_owned(), kind: ParamType::Int(8) },
+                Param { name: "b".to_owned(), kind: ParamType::Int(8) },
             ]))),
         }
     );

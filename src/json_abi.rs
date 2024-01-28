@@ -1,30 +1,34 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
-use crate::{
-    contract::Contract,
-    error::AbiError,
-    token::{Detokenizer, TokenValue, Tokenizer},
-    PublicKeyData, SignatureData,
-};
+use std::collections::HashMap;
+use std::str::FromStr;
 
 use serde_json::Value;
-use std::{collections::HashMap, str::FromStr};
 use tvm_block::MsgAddressInt;
-use tvm_types::{BuilderData, Ed25519PrivateKey, Result, SliceData};
+use tvm_types::BuilderData;
+use tvm_types::Ed25519PrivateKey;
+use tvm_types::Result;
+use tvm_types::SliceData;
 
-/// Encodes `parameters` for given `function` of contract described by `abi` into `BuilderData`
-/// which can be used as message body for calling contract
+use crate::contract::Contract;
+use crate::error::AbiError;
+use crate::token::Detokenizer;
+use crate::token::TokenValue;
+use crate::token::Tokenizer;
+use crate::PublicKeyData;
+use crate::SignatureData;
+
+/// Encodes `parameters` for given `function` of contract described by `abi`
+/// into `BuilderData` which can be used as message body for calling contract
 pub fn encode_function_call(
     abi: &str,
     function: &str,
@@ -55,16 +59,15 @@ pub fn encode_function_call(
     let v: Value = serde_json::from_str(&parameters).map_err(|err| AbiError::SerdeError { err })?;
     let input_tokens = Tokenizer::tokenize_all_params(function.input_params(), &v)?;
 
-    let address = address
-        .map(|string| MsgAddressInt::from_str(&string))
-        .transpose()?;
+    let address = address.map(|string| MsgAddressInt::from_str(&string)).transpose()?;
 
     function.encode_input(&header_tokens, &input_tokens, internal, sign_key, address)
 }
 
-/// Encodes `parameters` for given `function` of contract described by `abi` into `BuilderData`
-/// which can be used as message body for calling contract. Message body is prepared for
-/// signing. Sign should be the added by `add_sign_to_function_call` function
+/// Encodes `parameters` for given `function` of contract described by `abi`
+/// into `BuilderData` which can be used as message body for calling contract.
+/// Message body is prepared for signing. Sign should be the added by
+/// `add_sign_to_function_call` function
 pub fn prepare_function_call_for_sign(
     abi: &str,
     function: &str,
@@ -86,14 +89,13 @@ pub fn prepare_function_call_for_sign(
     let v: Value = serde_json::from_str(&parameters).map_err(|err| AbiError::SerdeError { err })?;
     let input_tokens = Tokenizer::tokenize_all_params(function.input_params(), &v)?;
 
-    let address = address
-        .map(|string| MsgAddressInt::from_str(&string))
-        .transpose()?;
+    let address = address.map(|string| MsgAddressInt::from_str(&string)).transpose()?;
 
     function.create_unsigned_call(&header_tokens, &input_tokens, false, true, address)
 }
 
-/// Add sign to messsage body returned by `prepare_function_call_for_sign` function
+/// Add sign to messsage body returned by `prepare_function_call_for_sign`
+/// function
 pub fn add_sign_to_function_call(
     abi: &str,
     signature: &SignatureData,
@@ -126,7 +128,8 @@ pub struct DecodedMessage {
     pub params: String,
 }
 
-/// Decodes output parameters returned by some function call. Returns parametes and function name
+/// Decodes output parameters returned by some function call. Returns parametes
+/// and function name
 pub fn decode_unknown_function_response(
     abi: &str,
     response: SliceData,
@@ -139,13 +142,11 @@ pub fn decode_unknown_function_response(
 
     let output = Detokenizer::detokenize(&result.tokens)?;
 
-    Ok(DecodedMessage {
-        function_name: result.function_name,
-        params: output,
-    })
+    Ok(DecodedMessage { function_name: result.function_name, params: output })
 }
 
-/// Decodes output parameters returned by some function call. Returns parametes and function name
+/// Decodes output parameters returned by some function call. Returns parametes
+/// and function name
 pub fn decode_unknown_function_call(
     abi: &str,
     response: SliceData,
@@ -158,10 +159,7 @@ pub fn decode_unknown_function_call(
 
     let input = Detokenizer::detokenize(&result.tokens)?;
 
-    Ok(DecodedMessage {
-        function_name: result.function_name,
-        params: input,
-    })
+    Ok(DecodedMessage { function_name: result.function_name, params: input })
 }
 
 /// Changes initial values for public contract variables
@@ -170,11 +168,7 @@ pub fn update_contract_data(abi: &str, parameters: &str, data: SliceData) -> Res
 
     let data_json: serde_json::Value = serde_json::from_str(parameters)?;
 
-    let params: Vec<_> = contract
-        .data()
-        .values()
-        .map(|item| item.value.clone())
-        .collect();
+    let params: Vec<_> = contract.data().values().map(|item| item.value.clone()).collect();
 
     let tokens = Tokenizer::tokenize_all_params(&params[..], &data_json)?;
 
@@ -204,14 +198,12 @@ pub fn get_signature_data(
     address: Option<&str>,
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     let contract = Contract::load(abi.as_bytes())?;
-    let address = address
-        .map(|string| MsgAddressInt::from_str(string))
-        .transpose()?;
+    let address = address.map(|string| MsgAddressInt::from_str(string)).transpose()?;
     contract.get_signature_data(cursor, address)
 }
 
-/// Encodes `parameters` for given `function` of contract described by `abi` into `BuilderData`
-/// which can be used as message body for calling contract
+/// Encodes `parameters` for given `function` of contract described by `abi`
+/// into `BuilderData` which can be used as message body for calling contract
 pub fn encode_storage_fields(abi: &str, init_fields: Option<&str>) -> Result<BuilderData> {
     let contract = Contract::load(abi.as_bytes())?;
 

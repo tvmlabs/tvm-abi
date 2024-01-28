@@ -1,20 +1,24 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
-use crate::contract::{AbiVersion, SerdeEvent};
+use tvm_types::Result;
+use tvm_types::SliceData;
+
+use crate::contract::AbiVersion;
+use crate::contract::SerdeEvent;
 use crate::error::AbiError;
-use crate::{Function, Param, Token, TokenValue};
-use tvm_types::{Result, SliceData};
+use crate::Function;
+use crate::Param;
+use crate::Token;
+use crate::TokenValue;
 
 /// Contract event specification.
 #[derive(Debug, Clone, PartialEq)]
@@ -32,17 +36,10 @@ pub struct Event {
 impl Event {
     /// Creates `Function` struct from parsed JSON struct `SerdeFunction`
     pub(crate) fn from_serde(abi_version: AbiVersion, serde_event: SerdeEvent) -> Self {
-        let mut event = Event {
-            abi_version,
-            name: serde_event.name,
-            inputs: serde_event.inputs,
-            id: 0,
-        };
-        event.id = if let Some(id) = serde_event.id {
-            id
-        } else {
-            event.get_function_id() & 0x7FFFFFFF
-        };
+        let mut event =
+            Event { abi_version, name: serde_event.name, inputs: serde_event.inputs, id: 0 };
+        event.id =
+            if let Some(id) = serde_event.id { id } else { event.get_function_id() & 0x7FFFFFFF };
         event
     }
 

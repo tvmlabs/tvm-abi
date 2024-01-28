@@ -1,32 +1,35 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 //! TON ABI params.
-use crate::{
-    contract::{AbiVersion, ABI_VERSION_2_4},
-    error::AbiError,
-    int::{Int, Uint},
-    param::Param,
-    param_type::ParamType,
-    PublicKeyData,
-};
-
-use chrono::prelude::Utc;
-use num_bigint::{BigInt, BigUint};
 use std::collections::BTreeMap;
 use std::fmt;
-use tvm_block::{Grams, MsgAddress};
-use tvm_types::{BuilderData, Cell, Result};
+
+use chrono::prelude::Utc;
+use num_bigint::BigInt;
+use num_bigint::BigUint;
+use tvm_block::Grams;
+use tvm_block::MsgAddress;
+use tvm_types::BuilderData;
+use tvm_types::Cell;
+use tvm_types::Result;
+
+use crate::contract::AbiVersion;
+use crate::contract::ABI_VERSION_2_4;
+use crate::error::AbiError;
+use crate::int::Int;
+use crate::int::Uint;
+use crate::param::Param;
+use crate::param_type::ParamType;
+use crate::PublicKeyData;
 
 mod deserialize;
 mod detokenizer;
@@ -55,10 +58,7 @@ pub struct Token {
 
 impl Token {
     pub fn new(name: &str, value: TokenValue) -> Self {
-        Self {
-            name: name.to_string(),
-            value,
-        }
+        Self { name: name.to_string(), value }
     }
 }
 
@@ -73,11 +73,13 @@ impl fmt::Display for Token {
 pub enum TokenValue {
     /// uint<M>: unsigned integer type of M bits.
     ///
-    /// Encoded as M bits of big-endian number representation put into cell data.
+    /// Encoded as M bits of big-endian number representation put into cell
+    /// data.
     Uint(Uint),
     /// int<M>: signed integer type of M bits.
     ///
-    /// Encoded as M bits of big-endian number representation put into cell data.
+    /// Encoded as M bits of big-endian number representation put into cell
+    /// data.
     Int(Int),
     /// Variable length integer
     ///
@@ -104,13 +106,10 @@ pub enum TokenValue {
     /// Encoded as all array elements encodings put to separate cell.
     FixedArray(ParamType, Vec<TokenValue>),
     /// TVM Cell
-    ///
     Cell(Cell),
     /// Dictionary of values
-    ///
     Map(ParamType, ParamType, BTreeMap<String, TokenValue>),
     /// MsgAddress
-    ///
     Address(MsgAddress),
     /// Raw byte array
     ///
@@ -125,7 +124,6 @@ pub enum TokenValue {
     /// Encoded similar to `Bytes`
     String(String),
     /// Nanograms
-    ///
     Token(Grams),
     /// Timestamp
     Time(u64),
@@ -148,20 +146,12 @@ impl fmt::Display for TokenValue {
             TokenValue::VarInt(_, u) => write!(f, "{}", u),
             TokenValue::Bool(b) => write!(f, "{}", b),
             TokenValue::Tuple(ref arr) => {
-                let s = arr
-                    .iter()
-                    .map(|ref t| format!("{}", t))
-                    .collect::<Vec<String>>()
-                    .join(",");
+                let s = arr.iter().map(|ref t| format!("{}", t)).collect::<Vec<String>>().join(",");
 
                 write!(f, "({})", s)
             }
             TokenValue::Array(_, ref arr) | TokenValue::FixedArray(_, ref arr) => {
-                let s = arr
-                    .iter()
-                    .map(|ref t| format!("{}", t))
-                    .collect::<Vec<String>>()
-                    .join(",");
+                let s = arr.iter().map(|ref t| format!("{}", t)).collect::<Vec<String>>().join(",");
 
                 write!(f, "[{}]", s)
             }
@@ -257,10 +247,7 @@ impl TokenValue {
             TokenValue::Optional(opt_type, opt_value) => {
                 if let ParamType::Optional(ref param_type) = *param_type {
                     param_type.as_ref() == opt_type
-                        && opt_value
-                            .as_ref()
-                            .map(|val| val.type_check(param_type))
-                            .unwrap_or(true)
+                        && opt_value.as_ref().map(|val| val.type_check(param_type)).unwrap_or(true)
                 } else {
                     false
                 }
@@ -367,9 +354,9 @@ impl TokenValue {
             | ParamType::FixedBytes(_)
             | ParamType::Ref(_) => 1,
             // tuple refs is sum of inner types refs
-            ParamType::Tuple(params) => params.iter().fold(0, |acc, param| {
-                acc + Self::max_refs_count(&param.kind, abi_version)
-            }),
+            ParamType::Tuple(params) => params
+                .iter()
+                .fold(0, |acc, param| acc + Self::max_refs_count(&param.kind, abi_version)),
             // large optional is serialized into reference
             ParamType::Optional(param_type) => {
                 if Self::is_large_optional(param_type, abi_version) {
@@ -401,9 +388,9 @@ impl TokenValue {
             ParamType::Expire => 32,
             ParamType::PublicKey => 257,
             ParamType::Ref(_) => 0,
-            ParamType::Tuple(params) => params.iter().fold(0, |acc, param| {
-                acc + Self::max_bit_size(&param.kind, abi_version)
-            }),
+            ParamType::Tuple(params) => params
+                .iter()
+                .fold(0, |acc, param| acc + Self::max_bit_size(&param.kind, abi_version)),
             ParamType::Optional(param_type) => {
                 if Self::is_large_optional(&param_type, abi_version) {
                     1
@@ -424,16 +411,12 @@ impl TokenValue {
             ParamType::Array(inner) => TokenValue::Array(inner.as_ref().clone(), vec![]),
             ParamType::FixedArray(inner, size) => TokenValue::FixedArray(
                 inner.as_ref().clone(),
-                std::iter::repeat(Self::default_value(inner))
-                    .take(*size)
-                    .collect(),
+                std::iter::repeat(Self::default_value(inner)).take(*size).collect(),
             ),
             ParamType::Cell => TokenValue::Cell(Default::default()),
-            ParamType::Map(key, value) => TokenValue::Map(
-                key.as_ref().clone(),
-                value.as_ref().clone(),
-                Default::default(),
-            ),
+            ParamType::Map(key, value) => {
+                TokenValue::Map(key.as_ref().clone(), value.as_ref().clone(), Default::default())
+            }
             ParamType::Address => TokenValue::Address(MsgAddress::AddrNone),
             ParamType::Bytes => TokenValue::Bytes(vec![]),
             ParamType::FixedBytes(size) => TokenValue::FixedBytes(vec![0; *size]),
@@ -470,9 +453,6 @@ impl Token {
 
     /// Returns `Param` the token represents
     pub(crate) fn get_param(&self) -> Param {
-        Param {
-            name: self.name.clone(),
-            kind: self.value.get_param_type(),
-        }
+        Param { name: self.name.clone(), kind: self.value.get_param_type() }
     }
 }

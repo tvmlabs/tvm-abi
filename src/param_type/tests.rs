@@ -1,18 +1,17 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 mod param_type_tests {
-    use crate::{Param, ParamType};
+    use crate::Param;
+    use crate::ParamType;
 
     #[test]
     fn test_param_type_signature() {
@@ -37,24 +36,12 @@ mod param_type_tests {
         );
 
         let mut tuple_params = vec![];
-        tuple_params.push(Param {
-            name: "a".to_owned(),
-            kind: ParamType::Uint(123),
-        });
-        tuple_params.push(Param {
-            name: "b".to_owned(),
-            kind: ParamType::Int(8),
-        });
+        tuple_params.push(Param { name: "a".to_owned(), kind: ParamType::Uint(123) });
+        tuple_params.push(Param { name: "b".to_owned(), kind: ParamType::Int(8) });
 
         let tuple_with_tuple = vec![
-            Param {
-                name: "a".to_owned(),
-                kind: ParamType::Tuple(tuple_params.clone()),
-            },
-            Param {
-                name: "b".to_owned(),
-                kind: ParamType::Token,
-            },
+            Param { name: "a".to_owned(), kind: ParamType::Tuple(tuple_params.clone()) },
+            Param { name: "b".to_owned(), kind: ParamType::Token },
         ];
 
         assert_eq!(
@@ -80,14 +67,8 @@ mod param_type_tests {
 
         assert_eq!(ParamType::String.type_signature(), "string".to_owned());
 
-        assert_eq!(
-            ParamType::VarUint(16).type_signature(),
-            "varuint16".to_owned()
-        );
-        assert_eq!(
-            ParamType::VarInt(32).type_signature(),
-            "varint32".to_owned()
-        );
+        assert_eq!(ParamType::VarUint(16).type_signature(), "varuint16".to_owned());
+        assert_eq!(ParamType::VarInt(32).type_signature(), "varint32".to_owned());
 
         assert_eq!(
             ParamType::Optional(Box::new(ParamType::Int(123))).type_signature(),

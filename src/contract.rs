@@ -1,35 +1,40 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
-use crate::{
-    error::AbiError,
-    event::Event,
-    function::Function,
-    param::{Param, SerdeParam},
-    param_type::ParamType,
-    token::Token,
-    TokenValue,
-};
-use serde::de::Error as SerdeError;
-use serde_json;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fmt::Display;
 use std::io;
-use tvm_block::{MsgAddressInt, Serializable};
-use tvm_types::{
-    error, fail, BuilderData, HashmapE, Result, SliceData, ED25519_PUBLIC_KEY_LENGTH,
-    ED25519_SIGNATURE_LENGTH,
-};
+
+use serde::de::Error as SerdeError;
+use serde_json;
+use tvm_block::MsgAddressInt;
+use tvm_block::Serializable;
+use tvm_types::error;
+use tvm_types::fail;
+use tvm_types::BuilderData;
+use tvm_types::HashmapE;
+use tvm_types::Result;
+use tvm_types::SliceData;
+use tvm_types::ED25519_PUBLIC_KEY_LENGTH;
+use tvm_types::ED25519_SIGNATURE_LENGTH;
+
+use crate::error::AbiError;
+use crate::event::Event;
+use crate::function::Function;
+use crate::param::Param;
+use crate::param::SerdeParam;
+use crate::param_type::ParamType;
+use crate::token::Token;
+use crate::TokenValue;
 
 pub const MIN_SUPPORTED_VERSION: AbiVersion = ABI_VERSION_1_0;
 pub const MAX_SUPPORTED_VERSION: AbiVersion = ABI_VERSION_2_4;
@@ -93,10 +98,7 @@ impl Display for AbiVersion {
 
 impl From<u8> for AbiVersion {
     fn from(value: u8) -> Self {
-        Self {
-            major: value,
-            minor: 0,
-        }
+        Self { major: value, minor: 0 }
     }
 }
 
@@ -238,10 +240,13 @@ pub struct Contract {
 }
 
 impl Contract {
+    pub const DATA_MAP_KEYLEN: usize = 64;
+
     /// Loads contract from json.
     pub fn load<T: io::Read>(reader: T) -> Result<Self> {
-        // A little trick similar to `Param` deserialization: first deserialize JSON into temporary
-        // struct `SerdeContract` containing necessary fields and then repack fields into HashMap
+        // A little trick similar to `Param` deserialization: first deserialize JSON
+        // into temporary struct `SerdeContract` containing necessary fields and
+        // then repack fields into HashMap
         let mut serde_contract: SerdeContract = serde_json::from_reader(reader)?;
 
         let version = if let Some(str_version) = &serde_contract.version {
@@ -249,9 +254,7 @@ impl Contract {
         } else if let Some(version) = serde_contract.abi_version {
             AbiVersion::from_parts(version, 0)
         } else {
-            fail!(AbiError::InvalidVersion(
-                "No version in ABI JSON".to_owned()
-            ));
+            fail!(AbiError::InvalidVersion("No version in ABI JSON".to_owned()));
         };
 
         if !version.is_supported() {
@@ -269,10 +272,7 @@ impl Contract {
                 .into());
             }
             if serde_contract.set_time {
-                serde_contract.header.push(Param {
-                    name: "time".into(),
-                    kind: ParamType::Time,
-                });
+                serde_contract.header.push(Param { name: "time".into(), kind: ParamType::Time });
             }
         }
 
@@ -303,10 +303,7 @@ impl Contract {
 
         for event in serde_contract.events {
             Self::check_params_support(&version, event.inputs.iter())?;
-            result.events.insert(
-                event.name.clone(),
-                Event::from_serde(version.clone(), event),
-            );
+            result.events.insert(event.name.clone(), Event::from_serde(version.clone(), event));
         }
 
         Self::check_params_support(&version, serde_contract.data.iter().map(|val| &val.value))?;
@@ -344,22 +341,15 @@ impl Contract {
 
     /// Returns `Function` struct with provided function name.
     pub fn function(&self, name: &str) -> Result<&Function> {
-        self.functions.get(name).ok_or_else(|| {
-            AbiError::InvalidName {
-                name: name.to_owned(),
-            }
-            .into()
-        })
+        self.functions
+            .get(name)
+            .ok_or_else(|| AbiError::InvalidName { name: name.to_owned() }.into())
     }
 
     /// Returns `Function` struct with provided function id.
     pub fn function_by_id(&self, id: u32, input: bool) -> Result<&Function> {
         for (_, func) in &self.functions {
-            let func_id = if input {
-                func.get_input_id()
-            } else {
-                func.get_output_id()
-            };
+            let func_id = if input { func.get_input_id() } else { func.get_output_id() };
             if func_id == id {
                 return Ok(func);
             }
@@ -370,12 +360,7 @@ impl Contract {
 
     /// Returns `Event` struct with provided function name.
     pub fn event(&self, name: &str) -> Result<&Event> {
-        self.events.get(name).ok_or_else(|| {
-            AbiError::InvalidName {
-                name: name.to_owned(),
-            }
-            .into()
-        })
+        self.events.get(name).ok_or_else(|| AbiError::InvalidName { name: name.to_owned() }.into())
     }
 
     /// Returns `Event` struct with provided function id.
@@ -433,18 +418,12 @@ impl Contract {
         if let Ok(func) = self.function_by_id(func_id, false) {
             let tokens = func.decode_output(original_data, internal, allow_partial)?;
 
-            Ok(DecodedMessage {
-                function_name: func.name.clone(),
-                tokens: tokens,
-            })
+            Ok(DecodedMessage { function_name: func.name.clone(), tokens })
         } else {
             let event = self.event_by_id(func_id)?;
             let tokens = event.decode_input(original_data, allow_partial)?;
 
-            Ok(DecodedMessage {
-                function_name: event.name.clone(),
-                tokens: tokens,
-            })
+            Ok(DecodedMessage { function_name: event.name.clone(), tokens })
         }
     }
 
@@ -463,13 +442,8 @@ impl Contract {
 
         let tokens = func.decode_input(original_data, internal, allow_partial)?;
 
-        Ok(DecodedMessage {
-            function_name: func.name.clone(),
-            tokens,
-        })
+        Ok(DecodedMessage { function_name: func.name.clone(), tokens })
     }
-
-    pub const DATA_MAP_KEYLEN: usize = 64;
 
     pub fn data_map_supported_in_version(abi_version: &AbiVersion) -> bool {
         abi_version < &ABI_VERSION_2_4
@@ -589,9 +563,8 @@ impl Contract {
 
         let mut tokens = vec![];
         for param in &self.fields {
-            let token = init_fields
-                .remove_entry(&param.name)
-                .map(|(name, value)| Token { name, value });
+            let token =
+                init_fields.remove_entry(&param.name).map(|(name, value)| Token { name, value });
 
             if self.init_fields.contains(&param.name) {
                 let token = token.ok_or_else(|| AbiError::InvalidInputData {

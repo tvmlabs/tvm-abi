@@ -1,29 +1,41 @@
-/*
-* Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2022 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
-use crate::{
-    contract::{AbiVersion, ABI_VERSION_1_0, ABI_VERSION_2_2, ABI_VERSION_2_4},
-    error::AbiError,
-    int::{Int, Uint},
-    param_type::ParamType,
-    token::{Token, TokenValue, Tokenizer},
-    PublicKeyData,
-};
-
-use num_bigint::{BigInt, BigUint, Sign};
 use std::collections::BTreeMap;
+
+use num_bigint::BigInt;
+use num_bigint::BigUint;
+use num_bigint::Sign;
 use tvm_block::Serializable;
-use tvm_types::{error, fail, BuilderData, Cell, HashmapE, IBitstring, Result, SliceData};
+use tvm_types::error;
+use tvm_types::fail;
+use tvm_types::BuilderData;
+use tvm_types::Cell;
+use tvm_types::HashmapE;
+use tvm_types::IBitstring;
+use tvm_types::Result;
+use tvm_types::SliceData;
+
+use crate::contract::AbiVersion;
+use crate::contract::ABI_VERSION_1_0;
+use crate::contract::ABI_VERSION_2_2;
+use crate::contract::ABI_VERSION_2_4;
+use crate::error::AbiError;
+use crate::int::Int;
+use crate::int::Uint;
+use crate::param_type::ParamType;
+use crate::token::Token;
+use crate::token::TokenValue;
+use crate::token::Tokenizer;
+use crate::PublicKeyData;
 
 pub struct SerializedValue {
     pub data: BuilderData,
@@ -33,11 +45,7 @@ pub struct SerializedValue {
 
 impl From<BuilderData> for SerializedValue {
     fn from(data: BuilderData) -> Self {
-        SerializedValue {
-            max_bits: data.bits_used(),
-            max_refs: data.references_used(),
-            data,
-        }
+        SerializedValue { max_bits: data.bits_used(), max_refs: data.references_used(), data }
     }
 }
 
@@ -66,9 +74,7 @@ impl TokenValue {
         values.reverse();
         let mut packed_cells = match values.pop() {
             Some(cell) => vec![cell],
-            None => fail!(AbiError::InvalidData {
-                msg: "No cells".to_owned()
-            }),
+            None => fail!(AbiError::InvalidData { msg: "No cells".to_owned() }),
         };
         while let Some(value) = values.pop() {
             let builder = packed_cells.last_mut().unwrap();
@@ -91,9 +97,10 @@ impl TokenValue {
                 // if not enough bits or refs - continue chain
                 packed_cells.push(value);
             } else if value_refs > 0 && remaining_refs == value_refs {
-                // if refs strictly fit into cell we should decide if we can put them into current
-                // cell or to the next cell: if all remaining values can fit into current cell,
-                // then use current, if not - continue chain
+                // if refs strictly fit into cell we should decide if we can put them into
+                // current cell or to the next cell: if all remaining values can
+                // fit into current cell, then use current, if not - continue
+                // chain
                 let (refs, bits) = Self::get_remaining(&values, abi_version);
                 // in ABI v1 last ref is always used for chaining
                 if abi_version != &ABI_VERSION_1_0
@@ -115,9 +122,7 @@ impl TokenValue {
             .into_iter()
             .rev()
             .reduce(|acc, mut cur| {
-                cur.data
-                    .checked_append_reference(acc.data.into_cell().unwrap())
-                    .unwrap();
+                cur.data.checked_append_reference(acc.data.into_cell().unwrap()).unwrap();
                 cur
             })
             .unwrap()
@@ -129,10 +134,7 @@ impl TokenValue {
             if abi_version >= &ABI_VERSION_2_2 {
                 (refs + value.max_refs, bits + value.max_bits)
             } else {
-                (
-                    refs + value.data.references_used(),
-                    bits + value.data.bits_used(),
-                )
+                (refs + value.data.references_used(), bits + value.data.bits_used())
             }
         })
     }
@@ -192,11 +194,7 @@ impl TokenValue {
         let mut builder = BuilderData::new();
 
         if value.size > vec_bits_length {
-            let padding = if value.number.sign() == num_bigint::Sign::Minus {
-                0xFFu8
-            } else {
-                0u8
-            };
+            let padding = if value.number.sign() == num_bigint::Sign::Minus { 0xFFu8 } else { 0u8 };
 
             let dif = value.size - vec_bits_length;
 
@@ -387,9 +385,7 @@ impl TokenValue {
 
             let mut key_vec = key.write_to_cells(abi_version)?;
             if key_vec.len() != 1 {
-                fail!(AbiError::InvalidData {
-                    msg: "Map key must be 1-cell length".to_owned()
-                })
+                fail!(AbiError::InvalidData { msg: "Map key must be 1-cell length".to_owned() })
             };
             if &ParamType::Address == key_type
                 && key_vec[0].data.length_in_bits() != super::STD_ADDRESS_BIT_LENGTH
@@ -460,29 +456,16 @@ impl TokenValue {
 #[test]
 fn test_pack_cells() {
     let cells = vec![
-        BuilderData::with_bitstring(vec![1, 2, 0x80])
-            .unwrap()
-            .into(),
-        BuilderData::with_bitstring(vec![3, 4, 0x80])
-            .unwrap()
-            .into(),
+        BuilderData::with_bitstring(vec![1, 2, 0x80]).unwrap().into(),
+        BuilderData::with_bitstring(vec![3, 4, 0x80]).unwrap().into(),
     ];
     let builder = BuilderData::with_bitstring(vec![1, 2, 3, 4, 0x80]).unwrap();
-    assert_eq!(
-        TokenValue::pack_cells_into_chain(cells, &ABI_VERSION_1_0).unwrap(),
-        builder
-    );
+    assert_eq!(TokenValue::pack_cells_into_chain(cells, &ABI_VERSION_1_0).unwrap(), builder);
 
     let cells = vec![
-        BuilderData::with_raw(vec![0x55; 100], 100 * 8)
-            .unwrap()
-            .into(),
-        BuilderData::with_raw(vec![0x55; 127], 127 * 8)
-            .unwrap()
-            .into(),
-        BuilderData::with_raw(vec![0x55; 127], 127 * 8)
-            .unwrap()
-            .into(),
+        BuilderData::with_raw(vec![0x55; 100], 100 * 8).unwrap().into(),
+        BuilderData::with_raw(vec![0x55; 127], 127 * 8).unwrap().into(),
+        BuilderData::with_raw(vec![0x55; 127], 127 * 8).unwrap().into(),
     ];
 
     let builder = BuilderData::with_raw(vec![0x55; 127], 127 * 8).unwrap();

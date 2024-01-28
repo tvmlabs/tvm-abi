@@ -1,35 +1,41 @@
-/*
-* Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
-*
-* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
-* this file except in compliance with the License.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific TON DEV software governing permissions and
-* limitations under the License.
-*/
+// Copyright (C) 2019-2021 TON Labs. All Rights Reserved.
+//
+// Licensed under the SOFTWARE EVALUATION License (the "License"); you may not
+// use this file except in compliance with the License.
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific TON DEV software governing permissions and
+// limitations under the License.
 
 //! ABI param and parsing for it.
-use crate::{
-    error::AbiError,
-    int::{Int, Uint},
-    param::Param,
-    param_type::ParamType,
-    token::{Token, TokenValue},
-};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::convert::TryInto;
+use std::str::FromStr;
 
-use num_bigint::{BigInt, BigUint, Sign};
+use num_bigint::BigInt;
+use num_bigint::BigUint;
+use num_bigint::Sign;
 use num_traits::cast::ToPrimitive;
 use serde_json::Value;
-use std::{
-    collections::{BTreeMap, HashMap},
-    convert::TryInto,
-    str::FromStr,
-};
-use tvm_block::{Grams, MsgAddress};
-use tvm_types::{error, fail, read_single_root_boc, Cell, Result, ED25519_PUBLIC_KEY_LENGTH};
+use tvm_block::Grams;
+use tvm_block::MsgAddress;
+use tvm_types::error;
+use tvm_types::fail;
+use tvm_types::read_single_root_boc;
+use tvm_types::Cell;
+use tvm_types::Result;
+use tvm_types::ED25519_PUBLIC_KEY_LENGTH;
+
+use crate::error::AbiError;
+use crate::int::Int;
+use crate::int::Uint;
+use crate::param::Param;
+use crate::param_type::ParamType;
+use crate::token::Token;
+use crate::token::TokenValue;
 
 /// This struct should be used to parse string values as tokens.
 pub struct Tokenizer;
@@ -72,10 +78,7 @@ impl Tokenizer {
             for param in params {
                 let value = map.get(&param.name).unwrap_or(&Value::Null);
                 let token_value = Self::tokenize_parameter(&param.kind, value, &param.name)?;
-                tokens.push(Token {
-                    name: param.name.clone(),
-                    value: token_value,
-                });
+                tokens.push(Token { name: param.name.clone(), value: token_value });
             }
 
             Ok(tokens)
@@ -101,11 +104,8 @@ impl Tokenizer {
                 }
             }
             if !map.is_empty() {
-                let unknown = map
-                    .iter()
-                    .map(|(key, _)| key.as_ref())
-                    .collect::<Vec<&str>>()
-                    .join(", ");
+                let unknown =
+                    map.iter().map(|(key, _)| key.as_ref()).collect::<Vec<&str>>().join(", ");
                 return Err(AbiError::InvalidInputData {
                     msg: format!("Contract doesn't have following parameters: {}", unknown),
                 }
@@ -262,10 +262,11 @@ impl Tokenizer {
 
     /// Checks if given number can be fit into given bits count
     fn check_int_size(number: &BigInt, size: usize) -> bool {
-        // `BigInt::bits` returns fewest bits necessary to express the number, not including
-        // the sign and it works well for all values except `-2^n`. Such values can be encoded
-        // using `n` bits, but `bits` function returns `n` (and plus one bit for sign) so we
-        // have to explicitly check such situation by comparing bits sizes of given number
+        // `BigInt::bits` returns fewest bits necessary to express the number, not
+        // including the sign and it works well for all values except `-2^n`.
+        // Such values can be encoded using `n` bits, but `bits` function
+        // returns `n` (and plus one bit for sign) so we have to explicitly
+        // check such situation by comparing bits sizes of given number
         // and increased number
         if number.sign() == Sign::Minus && number.bits() != (number + BigInt::from(1)).bits() {
             (number.bits() as usize) <= size
@@ -379,11 +380,7 @@ impl Tokenizer {
                 let value = Self::tokenize_parameter(value_type, value, name)?;
                 new_map.insert(key.to_string(), value);
             }
-            Ok(TokenValue::Map(
-                key_type.clone(),
-                value_type.clone(),
-                new_map,
-            ))
+            Ok(TokenValue::Map(key_type.clone(), value_type.clone(), new_map))
         } else {
             fail!(AbiError::WrongDataFormat {
                 val: map_value.clone(),
@@ -489,13 +486,11 @@ impl Tokenizer {
                 name: name.to_string(),
                 err: format!("can not decode hex: {}", err),
             })?;
-            let bytes = data
-                .try_into()
-                .map_err(|_| AbiError::InvalidParameterLength {
-                    val: value.clone(),
-                    name: name.to_string(),
-                    expected: format!("{} bytes", ED25519_PUBLIC_KEY_LENGTH),
-                })?;
+            let bytes = data.try_into().map_err(|_| AbiError::InvalidParameterLength {
+                val: value.clone(),
+                name: name.to_string(),
+                expected: format!("{} bytes", ED25519_PUBLIC_KEY_LENGTH),
+            })?;
             Ok(TokenValue::PublicKey(Some(bytes)))
         }
     }
@@ -512,9 +507,7 @@ impl Tokenizer {
     }
 
     fn tokenize_ref(inner_type: &ParamType, value: &Value, name: &str) -> Result<TokenValue> {
-        Ok(TokenValue::Ref(Box::new(Self::tokenize_parameter(
-            inner_type, value, name,
-        )?)))
+        Ok(TokenValue::Ref(Box::new(Self::tokenize_parameter(inner_type, value, name)?)))
     }
 
     fn tokenize_address(value: &Value, name: &str) -> Result<TokenValue> {
