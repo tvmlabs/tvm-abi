@@ -35,9 +35,10 @@ mod param_type_tests {
             "bytes[][2]".to_owned()
         );
 
-        let mut tuple_params = vec![];
-        tuple_params.push(Param { name: "a".to_owned(), kind: ParamType::Uint(123) });
-        tuple_params.push(Param { name: "b".to_owned(), kind: ParamType::Int(8) });
+        let tuple_params = vec![
+            Param { name: "a".to_owned(), kind: ParamType::Uint(123) },
+            Param { name: "b".to_owned(), kind: ParamType::Int(8) },
+        ];
 
         let tuple_with_tuple = vec![
             Param { name: "a".to_owned(), kind: ParamType::Tuple(tuple_params.clone()) },

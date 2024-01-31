@@ -12,6 +12,7 @@
 //! Function and event param types.
 
 mod deserialize;
+#[allow(clippy::module_inception)]
 mod param_type;
 
 pub use self::deserialize::read_type;

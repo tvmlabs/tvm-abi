@@ -69,6 +69,7 @@ impl fmt::Display for Token {
 }
 
 /// TON ABI param values.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenValue {
     /// uint<M>: unsigned integer type of M bits.

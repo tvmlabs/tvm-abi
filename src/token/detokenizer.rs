@@ -126,7 +126,7 @@ impl Token {
     {
         let data = write_boc(cell).map_err(|err| serde::ser::Error::custom(err.to_string()))?;
 
-        let data = base64_encode(&data);
+        let data = base64_encode(data);
         serializer.serialize_str(&data)
     }
 
