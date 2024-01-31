@@ -17,6 +17,7 @@ use num_bigint::BigUint;
 use serde::ser::Serialize;
 use serde::ser::SerializeMap;
 use serde::ser::Serializer;
+use tvm_types::base64_encode;
 use tvm_types::write_boc;
 use tvm_types::Cell;
 use tvm_types::Result;
@@ -125,7 +126,7 @@ impl Token {
     {
         let data = write_boc(cell).map_err(|err| serde::ser::Error::custom(err.to_string()))?;
 
-        let data = base64::encode(&data);
+        let data = base64_encode(&data);
         serializer.serialize_str(&data)
     }
 

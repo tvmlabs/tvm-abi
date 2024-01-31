@@ -22,6 +22,7 @@ use num_traits::cast::ToPrimitive;
 use serde_json::Value;
 use tvm_block::Grams;
 use tvm_block::MsgAddress;
+use tvm_types::base64_decode;
 use tvm_types::error;
 use tvm_types::fail;
 use tvm_types::read_single_root_boc;
@@ -355,7 +356,7 @@ impl Tokenizer {
             return Ok(TokenValue::Cell(Cell::default()));
         }
 
-        let data = base64::decode(string).map_err(|err| AbiError::InvalidParameterValue {
+        let data = base64_decode(string).map_err(|err| AbiError::InvalidParameterValue {
             val: value.clone(),
             name: name.to_string(),
             err: format!("can not decode base64: {}", err),
